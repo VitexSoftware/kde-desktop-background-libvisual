@@ -1,0 +1,21 @@
+# LibVisual Background Configuration Template
+# Copy this file to ~/.config/libvisual-bg.conf and modify as needed
+
+[audio]
+# Audio input device
+# Use "default" for system default, or specify PulseAudio source name
+device=default
+
+[visual]
+# Visual plugin to use
+# Available plugins depend on your libvisual installation
+plugin=gforce
+
+# Automatic plugin switching interval in seconds
+# Set to 0 to disable auto-switching
+auto_switch_interval=30
+
+[window]
+# Desktop resolution (usually auto-detected)
+width=1920
+height=1080

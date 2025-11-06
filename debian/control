@@ -1,0 +1,47 @@
+Source: kde-desktop-background-libvisual
+Section: graphics
+Priority: optional
+Maintainer: Vítězslav Dvořák <info@vitexsoftware.cz>
+Build-Depends:
+ debhelper-compat (= 13),
+ cmake,
+ pkg-config,
+ qt6-base-dev,
+ qt6-tools-dev,
+ libvisual-0.4-dev,
+ libpulse-dev,
+ libx11-dev,
+ libxrender-dev,
+Standards-Version: 4.7.0
+Homepage: https://github.com/VitexSoftware/kde-desktop-background-libvisual
+Rules-Requires-Root: no
+#Vcs-Git: https://salsa.debian.org/debian/kde-desktop-background-libvisual.git
+#Vcs-Browser: https://salsa.debian.org/debian/kde-desktop-background-libvisual
+
+Package: kde-desktop-background-libvisual
+Architecture: any
+Multi-Arch: foreign
+Depends:
+ ${misc:Depends},
+ ${shlibs:Depends},
+ libvisual-0.4-plugins,
+ pulseaudio,
+Recommends:
+ kde-plasma-desktop,
+Description: Audio visualization on KDE desktop background using libvisual
+ LibVisual Desktop Background is an application that renders audio
+ visualizations directly on the KDE desktop background using the libvisual
+ library. It supports various visualization plugins including fractals,
+ waveforms, and spectrum analyzers.
+ .
+ Features:
+  * Real-time audio visualization on desktop background
+  * Support for multiple libvisual plugins
+  * PulseAudio integration for audio input
+  * Qt-based control panel with system tray integration
+  * Automatic plugin switching with configurable intervals
+  * Persistent configuration storage
+ .
+ The application runs as a background daemon and can be controlled through
+ a system tray interface, making it easy to customize the visualization
+ experience without interrupting your workflow.

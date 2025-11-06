@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+
+%:
+	dh $@
+
+override_dh_auto_configure:
+	dh_auto_configure -- \
+		-DCMAKE_BUILD_TYPE=Release \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DCMAKE_LIBRARY_ARCHITECTURE="$(DEB_TARGET_MULTIARCH)"
+
+override_dh_auto_install:
+	dh_auto_install
+	# Install desktop file
+	install -D -m644 libvisual-bg.desktop \
+		debian/kde-desktop-background-libvisual/usr/share/applications/libvisual-bg.desktop
+	# Install config template
+	install -D -m644 libvisual-bg.conf.template \
+		debian/kde-desktop-background-libvisual/usr/share/doc/kde-desktop-background-libvisual/examples/libvisual-bg.conf.template

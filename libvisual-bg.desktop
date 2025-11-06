@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=LibVisual Desktop Background
+Comment=Audio visualization on desktop background
+Comment[cs]=Audio vizualizace na pozadí plochy
+Exec=libvisual-bg
+Icon=multimedia-audio-player
+Terminal=false
+Type=Application
+Categories=AudioVideo;Audio;Qt;
+StartupNotify=false
+X-KDE-StartupNotify=false
+X-KDE-autostart-after=kdesktop

@@ -1,0 +1,63 @@
+# Build directories
+build/
+build-*/
+*.build/
+
+# Qt generated files
+*.moc
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.cmake
+!CMakeLists.txt
+
+# Executables
+libvisual-bg
+*.exe
+
+# Object files
+*.o
+*.obj
+*.lo
+*.la
+*.al
+.libs/
+*.so
+*.so.*
+*.dylib
+*.dll
+
+# Debug info
+*.dSYM/
+*.su
+*.idb
+*.pdb
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Config files (keep template)
+*.conf
+!*.conf.template
+
+# Logs
+*.log

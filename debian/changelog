@@ -1,0 +1,11 @@
+kde-desktop-background-libvisual (1.0.0-1) unstable; urgency=medium
+
+  * Initial release
+  * Audio visualization on KDE desktop background using libvisual
+  * Qt-based control panel with system tray integration
+  * Support for multiple libvisual plugins
+  * PulseAudio integration for audio input
+  * Automatic plugin switching with configurable intervals
+  * Persistent configuration storage
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Wed, 06 Nov 2025 12:00:00 +0100
