@@ -1,5 +1,11 @@
 # GitHub Copilot Instructions
 
+All code comments should be written in English.
+
+All messages, including error messages, should be written in English.
+
+README.md should be written in English.
+
 ## QML Development Rules
 
 ### QML Linting

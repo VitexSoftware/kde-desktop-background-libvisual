@@ -1,17 +1,19 @@
 # LibVisual Desktop Background
 
-Aplikace pro vykreslování audio vizualizací na pozadí KDE desktopového prostředí pomocí knihovny libvisual.
+Application for rendering audio visualizations on KDE desktop environment background using libvisual library.
 
-## Funkce
+![waveform screenshot](waveform.png?raw=true)
 
-- Vykreslování libvisual vizualizací přímo na desktop pozadí
-- Podpora různých audio vstupů (PulseAudio/ALSA)
-- GUI pro ovládání přes systémový tray
-- Automatické přepínání mezi vizualizačními pluginy
-- Ukládání nastavení do konfiguračního souboru
-- Podpora pro různé libvisual pluginy (fraktály, vlny, atd.)
+## Features
 
-## Závislosti
+- Rendering libvisual visualizations directly on desktop background
+- Support for various audio inputs (PulseAudio/ALSA)
+- GUI control via system tray
+- Automatic switching between visualization plugins
+- Settings saved to configuration file
+- Support for various libvisual plugins (fractals, waves, etc.)
+
+## Dependencies
 
 ### Debian/Ubuntu:
 ```bash
@@ -33,30 +35,30 @@ sudo pacman -S base-devel cmake qt6-base qt6-tools libvisual \
                pulseaudio libx11 libxrender pkgconf
 ```
 
-## Sestavení
+## Build
 
-### Rychlá instalace závislostí:
+### Quick dependency installation:
 ```bash
-# Automatická detekce distribuce a instalace závislostí
+# Automatic distribution detection and dependency installation
 ./install_deps.sh
 ```
 
-### Sestavení ze zdrojových kódů:
+### Build from source code:
 ```bash
-# Klonování repozitáře
+# Clone repository
 git clone <repository-url>
 cd kde-desktop-background-libvisual
 
-# Sestavení pomocí přiloženého skriptu
+# Build using included script
 ./build.sh
 
-# Nebo manuálně:
+# Or manually:
 mkdir build && cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release
 make -j"$(nproc)"
 ```
 
-### Sestavení Debian balíčku:
+### Build Debian package:
 ```bash
 # Instalace build závislostí pro Debian/Ubuntu
 sudo apt install debhelper devscripts
@@ -76,30 +78,30 @@ make simple_visualizer
 ./simple_visualizer
 ```
 
-## Použití
+## Usage
 
-### Spuštění aplikace:
+### Run application:
 ```bash
 ./libvisual-bg
 ```
 
-### Spuštění s automatickým startem vizualizace:
+### Run with automatic visualization start:
 ```bash
 ./libvisual-bg --autostart
 ```
 
-### Ovládání:
-1. Aplikace se spustí minimalizovaná v systémovém tray
-2. Dvojklik na ikonu v tray otevře ovládací panel
-3. V ovládacím panelu můžete:
-   - Vybrat audio zařízení
-   - Vybrat vizualizační plugin
-   - Nastavit interval automatického přepínání
-   - Spustit/zastavit vizualizaci
+### Controls:
+1. Application starts minimized in system tray
+2. Double-click tray icon to open control panel
+3. In the control panel you can:
+   - Select audio device
+   - Select visualization plugin
+   - Set automatic switching interval
+   - Start/stop visualization
 
-## Konfigurace
+## Configuration
 
-Nastavení se automaticky ukládá do `~/.config/libvisual-bg.conf`:
+Settings are automatically saved to `~/.config/libvisual-bg.conf`:
 
 ```ini
 [audio]
@@ -114,30 +116,30 @@ width=1920
 height=1080
 ```
 
-## Dostupné libvisual pluginy
+## Available libvisual plugins
 
-Aplikace automaticky detekuje nainstalované libvisual pluginy. Běžné pluginy:
-- `gforce` - Abstraktní efekty
-- `infinite` - Nekonečné fraktály
-- `jakdaw` - Spektrální analýzer
-- `lv_scope` - Osciloskop
-- `nebulus` - Mlhovina efekty
+Application automatically detects installed libvisual plugins. Common plugins:
+- `gforce` - Abstract effects
+- `infinite` - Infinite fractals
+- `jakdaw` - Spectral analyzer
+- `lv_scope` - Oscilloscope
+- `nebulus` - Nebula effects
 
-## Řešení problémů
+## Troubleshooting
 
-### Aplikace se nespustí:
-1. Zkontrolujte, zda jsou nainstalovány všechny závislosti
-2. Ověřte, že libvisual pluginy jsou dostupné:
+### Application won't start:
+1. Check that all dependencies are installed
+2. Verify that libvisual plugins are available:
    ```bash
    ls /usr/lib/libvisual-0.4/actor/
    ```
 
-### Žádný zvuk není detekován:
-1. Zkontrolujte PulseAudio nastavení:
+### No audio is detected:
+1. Check PulseAudio settings:
    ```bash
    pactl list sources short
    ```
-2. Vyberte správný audio vstup v GUI
+2. Select correct audio input in GUI
 3. Ujistěte se, že aplikace má přístup k audio
 
 ### Vizualizace se nezobrazuje:
