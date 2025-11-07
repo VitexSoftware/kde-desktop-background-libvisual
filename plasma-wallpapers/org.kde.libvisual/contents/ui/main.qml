@@ -84,45 +84,45 @@ WallpaperItem {
     // Enhanced spectrum bars with more realistic audio simulation
     Repeater {
         id: spectrumRepeater
-        property bool hasBackend: false
+        anchors.fill: parent
         model: visualizationType === 0 ? 64 : 0
+        
         Rectangle {
-            readonly property bool hb: spectrumRepeater.hasBackend
             // Enhanced frequency response simulation
             readonly property real freqMultiplier: (index < 12) ? root.bassLevel : 
                                                   (index < 24) ? root.midLevel : 
                                                   (index < 40) ? root.trebleLevel : root.audioPeak
-            readonly property real baseAmp: 0.05 + 0.95 * freqMultiplier
+            readonly property real baseAmp: 0.3 + 0.7 * freqMultiplier
             readonly property real randomFactor: Math.abs(Math.sin(root.t * (4 + index * 0.15) + index * 0.8))
-            readonly property real mag: baseAmp * randomFactor * (0.7 + 0.5 * Math.sin(root.t * 6 + index * 0.3)) * root.audioSensitivity
+            readonly property real mag: Math.max(0.2, baseAmp * randomFactor * (0.7 + 0.5 * Math.sin(root.t * 6 + index * 0.3)) * root.audioSensitivity)
             
-            width: parent.width / (model === 0 ? 1 : model) * 0.8
+            // Fixed positioning and sizing
+            width: Math.max(6, parent.width / 64 * 0.8)
+            height: Math.max(30, parent.height * 0.8 * Math.min(mag, 1.0))
             anchors.bottom: parent.bottom
-            height: Math.max(3, (parent.height * 0.8) * Math.min(mag, 1.0))
-            x: index * (parent.width / (model === 0 ? 1 : model))
-            radius: width * 0.4
+            x: index * (parent.width / 64)
+            radius: 2
             
-            // Enhanced reactive coloring
+            // Enhanced reactive coloring with guaranteed visibility
             color: Qt.rgba(
-                0.1 + 0.7 * Math.min(mag, 1.0), 
-                0.2 + 0.6 * root.audioPeak, 
-                0.5 + 0.5 * freqMultiplier, 
-                0.8 + 0.2 * Math.min(mag, 1.0)
+                Math.max(0.4, 0.2 + 0.6 * Math.min(mag, 1.0)), 
+                Math.max(0.3, 0.3 + 0.5 * root.audioPeak), 
+                Math.max(0.5, 0.6 + 0.4 * freqMultiplier), 
+                0.95 // High opacity for visibility
             )
             
             // Pulse effect for high peaks
-            scale: mag > 0.8 ? (1.0 + 0.3 * Math.sin(root.t * 20)) : 1.0
+            scale: mag > 0.7 ? (1.0 + 0.2 * Math.sin(root.t * 15)) : 1.0
             
-            // Glow effect for intense moments
+            // Always visible glow effect
             Rectangle {
                 anchors.centerIn: parent
-                width: parent.width * 1.8
-                height: parent.height * 1.2
+                width: parent.width * 1.5
+                height: parent.height * 1.1
                 radius: parent.radius
                 color: "transparent"
-                border.color: Qt.rgba(1, 0.8, 0.2, mag > 0.6 ? (mag - 0.6) * 0.8 : 0)
-                border.width: mag > 0.6 ? 3 : 0
-                visible: mag > 0.5
+                border.color: Qt.rgba(1, 0.8, 0.3, 0.6)
+                border.width: 2
             }
         }
     }
@@ -391,23 +391,41 @@ WallpaperItem {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        color: Qt.rgba(0,0,0,0.35)
+        width: 200
+        height: 100
+        color: Qt.rgba(0,0,0,0.7) // More opaque for visibility
         radius: 6
         visible: root.showInfo
+        border.color: "#ffffff"
+        border.width: 1
         property int margin: 8
+        
         Column {
             anchors.fill: parent
             anchors.margins: info.margin
             spacing: 4
-            Text { text: "LibVisual Wallpaper"; color: "white"; font.bold: true }
+            Text { 
+                text: "LibVisual Wallpaper" 
+                color: "white" 
+                font.bold: true 
+                font.pointSize: 10
+            }
             Text { 
                 text: "Audio: " + root.audioSource
-                color: "white"; font.pointSize: 9 
+                color: "white" 
+                font.pointSize: 9 
             }
-            Text { text: "Mode: " + (visualizationType === 0 ? "Spectrum" : visualizationType === 3 ? "Fractal" : "Placeholder"); color: "white"; font.pointSize: 9 }
+            Text { 
+                text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" : 
+                              root.visualizationType === 1 ? "Waveform" :
+                              root.visualizationType === 2 ? "Oscilloscope" : "Fractal")
+                color: "white" 
+                font.pointSize: 9 
+            }
             Text { 
                 text: "Sensitivity: " + root.audioSensitivity.toFixed(1)
-                color: "white"; font.pointSize: 9 
+                color: "white" 
+                font.pointSize: 9 
             }
         }
     }
