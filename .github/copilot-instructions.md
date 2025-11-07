@@ -9,6 +9,12 @@
 - Fix any warnings or errors before committing QML changes
 - This helps catch syntax errors, import issues, and other QML-specific problems early
 
+### QML Plugin Naming (CRITICAL)
+- **QML plugins MUST have `lib` prefix in filename to be found by QML engine**
+- If CMake generates `someplugin.so`, create symlink: `libsomeplugin.so -> someplugin.so`
+- This fixes "module 'ModuleName' plugin 'pluginname' not found" errors
+- **REMEMBER**: This exact issue was solved twice - always check plugin filename format first!
+
 ### Example Usage
 ```bash
 # After editing any .qml file, run:
@@ -30,4 +36,11 @@
 2. **Run qmllint on modified QML files**
 3. Build with CMake: `make -j$(nproc)`
 4. Install: `make install`
-5. Test wallpaper and configuration in Desktop Settings
+5. **Check QML plugin has `lib` prefix** (`libpluginname.so`)
+6. Test wallpaper and configuration in Desktop Settings
+
+### Common Issues
+- **QML Plugin Not Found**: Always check if plugin file has `lib` prefix
+- **Library Dependencies**: Use `ldd` to check if backing libraries are found
+- **Permissions**: QML plugins need execute permissions (`chmod +x`)
+- **Multiple Installations**: Clean old installations in `/usr/local/` that may conflict

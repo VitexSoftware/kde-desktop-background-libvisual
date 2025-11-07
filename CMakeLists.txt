@@ -67,3 +67,6 @@ target_compile_options(libvisual-bg PRIVATE
 
 # Install target
 install(TARGETS libvisual-bg DESTINATION bin)
+
+# Add wallpaper plugin subdirectory
+add_subdirectory(plasma-wallpapers/org.kde.libvisual)

@@ -7,7 +7,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.plasmoid 2.0
-import LibVisualBackend 1.0
+import AudioVisualizer 1.0
 
 WallpaperItem {
     id: root
@@ -21,49 +21,60 @@ WallpaperItem {
     
     // Audio backend configuration
     property bool useRealAudio: true   // Enable real audio by default now that module works
-    property bool debugAudio: true    // Enable debug logging to show backend status
+    property bool debugAudio: false   // Disable ALL debug logging to reduce console spam
     
     // Real audio backend instance
-    LibVisualBackend {
+    AudioVisualizer {
         id: audioBackend
         
         Component.onCompleted: {
-            console.log("LibVisualBackend - Audio backend initialized successfully!")
-            console.log("LibVisualBackend - FFT Size:", fftSize)
-            console.log("LibVisualBackend - Initial audio active:", audioActive)
             if (debugAudio) {
-                console.log("LibVisualBackend - Module loading issue resolved!")
+                // console.log("AudioVisualizer - Audio backend initialized successfully!")
+                // console.log("AudioVisualizer - Device count:", deviceCount)
+                // console.log("AudioVisualizer - Initial running state:", running)
+                // console.log("AudioVisualizer - Unified module loaded successfully!")
             }
+            // Start audio processing
+            start()
         }
         
-        onAudioActiveChanged: {
+        onRunningChanged: {
             if (root.debugAudio) {
-                console.log("LibVisualBackend - Audio active changed:", audioActive)
+                // console.log("AudioVisualizer - Running state changed:", running)
             }
         }
         
         onDecibelsChanged: {
-            if (root.debugAudio && Math.random() < 0.01) { // Log 1% of the time to avoid spam
-                console.log("LibVisualBackend - Audio level:", decibels.toFixed(1), "dB")
-            }
+            // Debug output completely disabled
+            // if (root.debugAudio && Math.random() < 0.01) { 
+            //     // console.log("AudioVisualizer - Audio level:", decibels.toFixed(1), "dB")
+            // }
         }
     }
 
-    // Configuration change handlers
+        // Configuration change handlers
     onVisualizationTypeChanged: {
-        console.log("Wallpaper - Visualization type changed to:", visualizationType)
+        if (root.debugAudio) {
+            // console.log("Wallpaper - Visualization type changed to:", visualizationType)
+        }
     }
     
     onAudioSensitivityChanged: {
-        console.log("Wallpaper - Audio sensitivity changed to:", audioSensitivity)
+        if (root.debugAudio) {
+            // console.log("Wallpaper - Audio sensitivity changed to:", audioSensitivity)
+        }
     }
     
     onShowInfoChanged: {
-        console.log("Wallpaper - Show info changed to:", showInfo)
+        if (root.debugAudio) {
+            // console.log("Wallpaper - Show info changed to:", showInfo)
+        }
     }
     
     onAudioSourceChanged: {
-        console.log("Wallpaper - Audio source changed to:", audioSource)
+        if (root.debugAudio) {
+            // console.log("Wallpaper - Audio source changed to:", audioSource)
+        }
     }
 
     // Fill the available wallpaper space
@@ -80,7 +91,7 @@ WallpaperItem {
     
     // Comprehensive audio processing function
     function updateAudioLevels() {
-        if (root.useRealAudio && audioBackend && audioBackend.audioActive) {
+        if (root.useRealAudio && audioBackend && audioBackend.running) {
             // Use real audio data from LibVisualBackend
             updateRealAudioLevels()
         } else {
@@ -93,7 +104,11 @@ WallpaperItem {
         // Convert decibels to linear scale (dB range typically -60 to 0)
         // Normalize to 0-1 range and apply sensitivity
         const dbNormalized = Math.max(0, (audioBackend.decibels + 60) / 60)
-        root.audioPeak = Math.max(0.1, dbNormalized * root.audioSensitivity)
+        
+        // Add noise threshold - only show activity above meaningful levels
+        const noiseThreshold = 0.15  // 15% threshold to filter out background noise
+        const rawLevel = dbNormalized * root.audioSensitivity
+        root.audioPeak = rawLevel > noiseThreshold ? Math.max(0, rawLevel - noiseThreshold) / (1 - noiseThreshold) : 0
         
         // Extract frequency band levels from spectrum
         if (audioBackend.spectrum && audioBackend.spectrum.length >= 64) {
@@ -102,21 +117,24 @@ WallpaperItem {
             for (let i = 0; i < 16; i++) {
                 bassSum += audioBackend.spectrum[i] || 0
             }
-            root.bassLevel = Math.max(0.1, (bassSum / 16) * root.audioSensitivity)
+            const rawBass = (bassSum / 16) * root.audioSensitivity
+            root.bassLevel = rawBass > noiseThreshold ? Math.max(0, rawBass - noiseThreshold) / (1 - noiseThreshold) : 0
             
             // Mid: bins 16-39 (roughly 1-4kHz)  
             let midSum = 0
             for (let i = 16; i < 40; i++) {
                 midSum += audioBackend.spectrum[i] || 0
             }
-            root.midLevel = Math.max(0.1, (midSum / 24) * root.audioSensitivity)
+            const rawMid = (midSum / 24) * root.audioSensitivity
+            root.midLevel = rawMid > noiseThreshold ? Math.max(0, rawMid - noiseThreshold) / (1 - noiseThreshold) : 0
             
             // Treble: bins 40-63 (roughly 4-8kHz)
             let trebleSum = 0
             for (let i = 40; i < Math.min(64, audioBackend.spectrum.length); i++) {
                 trebleSum += audioBackend.spectrum[i] || 0
             }
-            root.trebleLevel = Math.max(0.1, (trebleSum / 24) * root.audioSensitivity)
+            const rawTreble = (trebleSum / 24) * root.audioSensitivity
+            root.trebleLevel = rawTreble > noiseThreshold ? Math.max(0, rawTreble - noiseThreshold) / (1 - noiseThreshold) : 0
         } else {
             // Fallback if spectrum is not available
             root.bassLevel = root.audioPeak * 0.8
@@ -124,12 +142,13 @@ WallpaperItem {
             root.trebleLevel = root.audioPeak * 0.7
         }
         
-        if (root.debugAudio && Math.random() < 0.005) { // Log occasionally
-            console.log("Real Audio - Peak:", root.audioPeak.toFixed(2), 
-                       "Bass:", root.bassLevel.toFixed(2),
-                       "Mid:", root.midLevel.toFixed(2), 
-                       "Treble:", root.trebleLevel.toFixed(2))
-        }
+        // Debug output completely disabled 
+        // if (root.debugAudio && Math.random() < 0.005) { 
+        //     // console.log("Real Audio - Peak:", root.audioPeak.toFixed(2), 
+        //                "Bass:", root.bassLevel.toFixed(2),
+        //                "Mid:", root.midLevel.toFixed(2), 
+        //                "Treble:", root.trebleLevel.toFixed(2))
+        // }
     }
     
     function updateSimulatedAudioLevels() {
@@ -199,7 +218,7 @@ WallpaperItem {
             readonly property real simulatedMag: Math.max(0.2, baseAmp * randomFactor * (0.7 + 0.5 * Math.sin(root.t * 6 + index * 0.3)) * root.audioSensitivity)
             
             // Use real spectrum data when available, otherwise simulate
-            readonly property real mag: root.useRealAudio && audioBackend && audioBackend.audioActive ? 
+            readonly property real mag: root.useRealAudio && audioBackend && audioBackend.running ? 
                                        Math.max(0.05, realSpectrum * root.audioSensitivity) : 
                                        simulatedMag
             
@@ -301,9 +320,7 @@ WallpaperItem {
 
     // Enhanced audio-reactive waveform visualization
     Item {
-        anchors.centerIn: parent
-        width: parent.width * 0.9
-        height: parent.height * 0.6
+        anchors.fill: parent
         visible: visualizationType === 1
         
         // Main waveform path
@@ -323,13 +340,18 @@ WallpaperItem {
                     var x = (i / steps) * width
                     var progress = i / steps * Math.PI * 8
                     
-                    // Multi-layered waveform with audio reactivity
-                    var amplitude = (height * 0.2) * root.audioSensitivity * 
-                                  (0.5 + 0.5 * Math.sin(progress + root.t * 4)) *
-                                  (0.7 + 0.3 * Math.sin(progress * 0.3 + root.t * 2.5)) *
-                                  (1.0 + root.audioPeak * Math.sin(progress * 2 + root.t * 8))
+                    // Multi-layered waveform with audio reactivity - uses ENTIRE screen height
+                    var maxAmplitude = height * 0.49   // Use 98% of screen height (49% from center each way)
+                    var baseAmplitude = maxAmplitude * 0.8  // Base amplitude at 80% of max
+                    var amplitude = baseAmplitude + (maxAmplitude - baseAmplitude) * root.audioSensitivity * 
+                                  (0.7 + 0.3 * Math.sin(progress + root.t * 4)) *
+                                  (0.8 + 0.2 * Math.sin(progress * 0.3 + root.t * 2.5)) *
+                                  (0.5 + 0.5 * root.audioPeak * Math.sin(progress * 2 + root.t * 8))
                     
                     var y = centerY + amplitude * Math.sin(progress + root.t * 6)
+                    
+                    // Allow waveform to extend beyond screen boundaries for loud sounds
+                    // No clipping - let it go off-screen when amplitude is high
                     
                     if (i === 0) ctx.moveTo(x, y)
                     else ctx.lineTo(x, y)
@@ -343,9 +365,15 @@ WallpaperItem {
                 for (var i = 0; i < steps; i++) {
                     var x = (i / steps) * width
                     var progress = i / steps * Math.PI * 12
-                    var amplitude = (height * 0.15) * root.audioSensitivity * root.midLevel *
-                                  (0.6 + 0.4 * Math.cos(progress * 0.5 + root.t * 3))
+                    var maxAmplitude = height * 0.47   // Secondary wave uses 94% of screen height
+                    var baseAmplitude = maxAmplitude * 0.6  // Base amplitude for secondary wave
+                    var amplitude = baseAmplitude + (maxAmplitude - baseAmplitude) * root.audioSensitivity * root.midLevel *
+                                  (0.7 + 0.3 * Math.cos(progress * 0.5 + root.t * 3))
                     var y = centerY + amplitude * Math.cos(progress + root.t * 4)
+                    
+                    // Allow secondary wave to reach very close to screen edges (1px margin)
+                    y = Math.max(1, Math.min(height - 1, y))
+                    
                     if (i === 0) ctx.moveTo(x, y)
                     else ctx.lineTo(x, y)
                 }
@@ -498,8 +526,8 @@ WallpaperItem {
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.margins: 12
-        width: 200
-        height: 100
+        width: 220  // Slightly wider for better text fit
+        height: 110 // Slightly taller to accommodate all lines
         color: Qt.rgba(0,0,0,0.7) // More opaque for visibility
         radius: 6
         visible: root.showInfo
@@ -510,42 +538,54 @@ WallpaperItem {
         Column {
             anchors.fill: parent
             anchors.margins: info.margin
-            spacing: 4
+            spacing: 3  // Reduced spacing for better fit
             Text { 
                 text: "LibVisual Wallpaper" 
                 color: "white" 
                 font.bold: true 
                 font.pointSize: 10
+                wrapMode: Text.Wrap
+                width: parent.width
             }
             Text { 
                 text: "Audio: " + root.audioSource
                 color: "white" 
-                font.pointSize: 9 
+                font.pointSize: 9
+                wrapMode: Text.Wrap
+                width: parent.width
             }
             Text {
-                text: "Backend: " + (root.useRealAudio && audioBackend && audioBackend.audioActive ? 
+                text: "Backend: " + (root.useRealAudio && audioBackend && audioBackend.running ? 
                       "REAL (" + audioBackend.decibels.toFixed(1) + " dB)" : "SIMULATED")
-                color: root.useRealAudio && audioBackend && audioBackend.audioActive ? "#00ff00" : "#ffff00"
+                color: root.useRealAudio && audioBackend && audioBackend.running ? "#00ff00" : "#ffff00"
                 font.pointSize: 9
                 font.bold: true
+                wrapMode: Text.Wrap
+                width: parent.width
             }
             Text { 
                 text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" : 
                               root.visualizationType === 1 ? "Waveform" :
                               root.visualizationType === 2 ? "Oscilloscope" : "Fractal")
                 color: "white" 
-                font.pointSize: 9 
+                font.pointSize: 9
+                wrapMode: Text.Wrap
+                width: parent.width
             }
             Text { 
                 text: "Sensitivity: " + root.audioSensitivity.toFixed(1)
                 color: "white" 
-                font.pointSize: 9 
+                font.pointSize: 9
+                wrapMode: Text.Wrap
+                width: parent.width
             }
         }
     }
 
     Component.onCompleted: {
-        console.log("LibVisual Background WallpaperItem loaded")
-        console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
+        if (debugAudio) {
+            // console.log("LibVisual Background WallpaperItem loaded")
+            // console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
+        }
     }
 }

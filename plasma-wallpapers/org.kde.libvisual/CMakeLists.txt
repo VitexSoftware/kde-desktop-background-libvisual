@@ -49,50 +49,38 @@ find_package(Plasma REQUIRED) # Provides Plasma::Plasma target (no Wallpaper C++
 # find_package(PkgConfig REQUIRED)
 # pkg_check_modules(LIBVISUAL REQUIRED libvisual-0.4)
 
-set(libvisual_wallpaper_SRCS plugin.cpp backend.cpp)
-# QML module for config dialog live audio probe
-qt_add_qml_module(libvisual_probe
-    URI LibVisualProbe
+set(libvisual_wallpaper_SRCS plugin.cpp)
+
+# Unified QML module for both wallpaper and config dialog
+qt_add_qml_module(audiovisualizer_probe
+    URI AudioVisualizer
     VERSION 1.0
-    CLASS_NAME LibVisualProbePlugin
+    CLASS_NAME AudioVisualizerPlugin
     NO_PLUGIN_OPTIONAL
-    SOURCES probe.cpp probe.h
-    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe
+    SOURCES audiovisualizer.cpp audiovisualizer.h
+    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer
 )
 
-# QML module for wallpaper backend (main audio + spectrum provider)
-qt_add_qml_module(libvisual_backend
-    URI LibVisualBackend
-    VERSION 1.0
-    CLASS_NAME LibVisualBackendPlugin
-    NO_PLUGIN_OPTIONAL
-    SOURCES backend.cpp backend.h
-    OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend
+target_link_libraries(audiovisualizer_probe PRIVATE ${PULSEAUDIO_LIBRARIES} ${FFTW3_LIBRARIES})
+target_include_directories(audiovisualizer_probe PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} ${FFTW3_INCLUDE_DIRS})
+
+# Set up RPATH for the plugin to find system libraries
+set_target_properties(audiovisualizer_probe PROPERTIES
+    INSTALL_RPATH "${KDE_INSTALL_LIBDIR};${CMAKE_INSTALL_PREFIX}/${KDE_INSTALL_LIBDIR}"
 )
 
-target_link_libraries(libvisual_probe PRIVATE Qt6::Core Qt6::Qml ${PULSEAUDIO_LIBRARIES})
-target_include_directories(libvisual_probe PRIVATE ${PULSEAUDIO_INCLUDE_DIRS})
+# Install unified QML module and backing library
+install(TARGETS audiovisualizer_probe DESTINATION ${KDE_INSTALL_LIBDIR})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probe.qmltypes DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
 
-target_link_libraries(libvisual_backend PRIVATE Qt6::Core Qt6::Gui Qt6::Qml ${PULSEAUDIO_LIBRARIES} ${FFTW3_LIBRARIES})
-target_include_directories(libvisual_backend PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} ${FFTW3_INCLUDE_DIRS})
-
-# Install QML modules properly (qt_add_qml_module creates plugin automatically)
-# We only need to install the plugin and metadata, not the library
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/libvisual_probeplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
-
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backendplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backend.qmltypes DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
-
-# Duplicate QML modules into multi-arch qml dir if that exists
+# Duplicate QML module into multi-arch qml dir if that exists
 if(MULTIARCH_QMLDIR AND NOT MULTIARCH_QMLDIR STREQUAL KDE_INSTALL_QMLDIR)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/qmldir DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/libvisual_probeplugin.so DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
-    
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/qmldir DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backendplugin.so DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backend.qmltypes DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
+    install(TARGETS audiovisualizer_probe DESTINATION ${KDE_INSTALL_LIBDIR})
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/qmldir DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probe.qmltypes DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
 endif()
 
 

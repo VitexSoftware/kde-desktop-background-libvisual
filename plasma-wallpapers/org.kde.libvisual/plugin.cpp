@@ -4,7 +4,7 @@
  */
 
 #include "plugin.h"
-#include "backend.h"
+#include "audiovisualizer.h"
 
 #include <KPluginFactory>
 #include <QDebug>
@@ -133,10 +133,8 @@ class LibVisualWallpaperPackage : public QObject {
 public:
     LibVisualWallpaperPackage(QObject *parent = nullptr) : QObject(parent) {
         qDebug() << "LibVisual wallpaper package loaded";
-        // Register QML types here
-        qmlRegisterType<LibVisualWallpaper>("LibVisualBackend", 1, 0, "LibVisualWallpaper");
-        qmlRegisterType<LibVisualBackend>("LibVisualBackend", 1, 0, "LibVisualBackend"); 
-        qDebug() << "LibVisual QML types registered";
+        // QML types are now registered automatically via QML_ELEMENT in AudioVisualizer
+        qDebug() << "LibVisual unified audio backend ready";
     }
 };
 
