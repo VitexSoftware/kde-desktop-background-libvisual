@@ -7,6 +7,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.plasmoid 2.0
+import LibVisualBackend 1.0
 
 WallpaperItem {
     id: root
@@ -19,23 +20,32 @@ WallpaperItem {
     property real t: 0
     
     // Audio backend configuration
-    property bool useRealAudio: false  // Start with simulation mode for compatibility
-    property bool debugAudio: true   // Enable debug logging to show backend status
+    property bool useRealAudio: true   // Enable real audio by default now that module works
+    property bool debugAudio: true    // Enable debug logging to show backend status
     
-    // Real audio backend - will be null if module not available
-    property var audioBackend: null
-    
-    // Fallback backend component
-    Item {
-        id: fallbackBackend
-        property int fftSize: 64
-        property bool audioActive: false
-        property real decibels: -60
-        property var spectrum: []
+    // Real audio backend instance
+    LibVisualBackend {
+        id: audioBackend
         
         Component.onCompleted: {
-            // Initialize fallback spectrum array
-            spectrum = new Array(64).fill(0.1)
+            console.log("LibVisualBackend - Audio backend initialized successfully!")
+            console.log("LibVisualBackend - FFT Size:", fftSize)
+            console.log("LibVisualBackend - Initial audio active:", audioActive)
+            if (debugAudio) {
+                console.log("LibVisualBackend - Module loading issue resolved!")
+            }
+        }
+        
+        onAudioActiveChanged: {
+            if (root.debugAudio) {
+                console.log("LibVisualBackend - Audio active changed:", audioActive)
+            }
+        }
+        
+        onDecibelsChanged: {
+            if (root.debugAudio && Math.random() < 0.01) { // Log 1% of the time to avoid spam
+                console.log("LibVisualBackend - Audio level:", decibels.toFixed(1), "dB")
+            }
         }
     }
 
@@ -132,18 +142,17 @@ WallpaperItem {
     
     // Helper function to get real spectrum data for a given frequency bin
     function getRealSpectrumValue(binIndex) {
-        const backend = audioBackend || fallbackBackend
-        if (!backend || !backend.spectrum || backend.spectrum.length === 0) {
+        if (!audioBackend || !audioBackend.spectrum || audioBackend.spectrum.length === 0) {
             return 0.1 // Fallback when no spectrum available
         }
         
-        const spectrumLength = backend.spectrum.length
+        const spectrumLength = audioBackend.spectrum.length
         if (binIndex >= spectrumLength) {
             return 0.05 // High frequency bins default to low value
         }
         
         // Direct mapping for now - could implement logarithmic scaling later
-        return Math.max(0.05, backend.spectrum[binIndex] || 0.05)
+        return Math.max(0.05, audioBackend.spectrum[binIndex] || 0.05)
     }
     
     // Audio-reactive properties

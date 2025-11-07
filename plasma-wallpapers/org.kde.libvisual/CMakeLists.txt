@@ -76,19 +76,23 @@ target_include_directories(libvisual_probe PRIVATE ${PULSEAUDIO_INCLUDE_DIRS})
 target_link_libraries(libvisual_backend PRIVATE Qt6::Core Qt6::Gui Qt6::Qml ${PULSEAUDIO_LIBRARIES} ${FFTW3_LIBRARIES})
 target_include_directories(libvisual_backend PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} ${FFTW3_INCLUDE_DIRS})
 
-# Ensure QML modules get installed to resolved KDE_INSTALL_QMLDIR (already forced above for user prefix)
-install(TARGETS libvisual_probe DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
-install(FILES qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
+# Install QML modules properly (qt_add_qml_module creates plugin automatically)
+# We only need to install the plugin and metadata, not the library
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/libvisual_probeplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualProbe)
 
-install(TARGETS libvisual_backend DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backendplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backend.qmltypes DESTINATION ${KDE_INSTALL_QMLDIR}/LibVisualBackend)
 
-# Duplicate QML modules into multi-arch qml dir if that exists (for environments that only scan it)
+# Duplicate QML modules into multi-arch qml dir if that exists
 if(MULTIARCH_QMLDIR AND NOT MULTIARCH_QMLDIR STREQUAL KDE_INSTALL_QMLDIR)
-    install(TARGETS libvisual_probe DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
-    install(FILES qmldir DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
-    install(TARGETS libvisual_backend DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/qmldir DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualProbe/libvisual_probeplugin.so DESTINATION ${MULTIARCH_QMLDIR}/LibVisualProbe)
+    
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/qmldir DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backendplugin.so DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/LibVisualBackend/libvisual_backend.qmltypes DESTINATION ${MULTIARCH_QMLDIR}/LibVisualBackend)
 endif()
 
 
