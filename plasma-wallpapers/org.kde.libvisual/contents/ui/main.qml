@@ -7,6 +7,7 @@ import QtQuick 2.15
 import QtQuick.Controls 2.15
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.plasmoid 2.0
+import LibVisualBackend 1.0
 
 WallpaperItem {
     id: root
@@ -18,8 +19,36 @@ WallpaperItem {
     property string audioSource: root.configuration.audioSource
     property real t: 0
     
-    // Backend instance - disabled for testing
-    property var backend: null
+    // Audio backend configuration
+    property bool useRealAudio: true  // Toggle between real and simulated audio
+    property bool debugAudio: false  // Enable audio debug logging
+    
+    // Real audio backend instance
+    LibVisualBackend {
+        id: audioBackend
+        Component.onCompleted: {
+            if (root.debugAudio) {
+                console.log("LibVisualBackend - Audio backend initialized")
+                console.log("LibVisualBackend - FFT Size:", fftSize)
+                console.log("LibVisualBackend - Initial audio active:", audioActive)
+            }
+        }
+        
+        onAudioActiveChanged: {
+            if (root.debugAudio) {
+                console.log("LibVisualBackend - Audio active changed:", audioActive)
+            }
+        }
+        
+        onDecibelsChanged: {
+            if (root.debugAudio && Math.random() < 0.01) { // Log 1% of the time to avoid spam
+                console.log("LibVisualBackend - Audio level:", decibels.toFixed(1), "dB")
+            }
+        }
+    }
+    
+    // Legacy backend property for compatibility
+    property var backend: audioBackend
 
     // Configuration change handlers
     onVisualizationTypeChanged: {
@@ -41,17 +70,90 @@ WallpaperItem {
     // Fill the available wallpaper space
     anchors.fill: parent
 
-    // Enhanced timer with audio-reactive variables
+    // Enhanced timer with real audio integration
     Timer {
-        interval: 16; running: true; repeat: true // Faster refresh rate for smoother animation
+        interval: 16; running: true; repeat: true // 60fps refresh rate
         onTriggered: {
             root.t += 0.016
-            // Simulate audio peaks with more dynamic variation
-            root.audioPeak = Math.max(0.1, Math.abs(Math.sin(root.t * 8 + Math.sin(root.t * 3) * 2)) * root.audioSensitivity)
-            root.bassLevel = Math.abs(Math.cos(root.t * 4 + Math.sin(root.t * 1.5))) * root.audioSensitivity
-            root.midLevel = Math.abs(Math.sin(root.t * 6 + Math.cos(root.t * 2.3) * 1.5)) * root.audioSensitivity
-            root.trebleLevel = Math.abs(Math.cos(root.t * 12 + Math.sin(root.t * 4.7))) * root.audioSensitivity
+            updateAudioLevels()
         }
+    }
+    
+    // Comprehensive audio processing function
+    function updateAudioLevels() {
+        if (root.useRealAudio && audioBackend && audioBackend.audioActive) {
+            // Use real audio data from LibVisualBackend
+            updateRealAudioLevels()
+        } else {
+            // Fallback to simulation
+            updateSimulatedAudioLevels()
+        }
+    }
+    
+    function updateRealAudioLevels() {
+        // Convert decibels to linear scale (dB range typically -60 to 0)
+        // Normalize to 0-1 range and apply sensitivity
+        const dbNormalized = Math.max(0, (audioBackend.decibels + 60) / 60)
+        root.audioPeak = Math.max(0.1, dbNormalized * root.audioSensitivity)
+        
+        // Extract frequency band levels from spectrum
+        if (audioBackend.spectrum && audioBackend.spectrum.length >= 64) {
+            // Bass: bins 0-15 (roughly 0-1kHz)
+            let bassSum = 0
+            for (let i = 0; i < 16; i++) {
+                bassSum += audioBackend.spectrum[i] || 0
+            }
+            root.bassLevel = Math.max(0.1, (bassSum / 16) * root.audioSensitivity)
+            
+            // Mid: bins 16-39 (roughly 1-4kHz)  
+            let midSum = 0
+            for (let i = 16; i < 40; i++) {
+                midSum += audioBackend.spectrum[i] || 0
+            }
+            root.midLevel = Math.max(0.1, (midSum / 24) * root.audioSensitivity)
+            
+            // Treble: bins 40-63 (roughly 4-8kHz)
+            let trebleSum = 0
+            for (let i = 40; i < Math.min(64, audioBackend.spectrum.length); i++) {
+                trebleSum += audioBackend.spectrum[i] || 0
+            }
+            root.trebleLevel = Math.max(0.1, (trebleSum / 24) * root.audioSensitivity)
+        } else {
+            // Fallback if spectrum is not available
+            root.bassLevel = root.audioPeak * 0.8
+            root.midLevel = root.audioPeak * 0.9  
+            root.trebleLevel = root.audioPeak * 0.7
+        }
+        
+        if (root.debugAudio && Math.random() < 0.005) { // Log occasionally
+            console.log("Real Audio - Peak:", root.audioPeak.toFixed(2), 
+                       "Bass:", root.bassLevel.toFixed(2),
+                       "Mid:", root.midLevel.toFixed(2), 
+                       "Treble:", root.trebleLevel.toFixed(2))
+        }
+    }
+    
+    function updateSimulatedAudioLevels() {
+        // Original simulation with more dynamic variation
+        root.audioPeak = Math.max(0.1, Math.abs(Math.sin(root.t * 8 + Math.sin(root.t * 3) * 2)) * root.audioSensitivity)
+        root.bassLevel = Math.abs(Math.cos(root.t * 4 + Math.sin(root.t * 1.5))) * root.audioSensitivity
+        root.midLevel = Math.abs(Math.sin(root.t * 6 + Math.cos(root.t * 2.3) * 1.5)) * root.audioSensitivity
+        root.trebleLevel = Math.abs(Math.cos(root.t * 12 + Math.sin(root.t * 4.7))) * root.audioSensitivity
+    }
+    
+    // Helper function to get real spectrum data for a given frequency bin
+    function getRealSpectrumValue(binIndex) {
+        if (!audioBackend || !audioBackend.spectrum || audioBackend.spectrum.length === 0) {
+            return 0.1 // Fallback when no real spectrum available
+        }
+        
+        const spectrumLength = audioBackend.spectrum.length
+        if (binIndex >= spectrumLength) {
+            return 0.05 // High frequency bins default to low value
+        }
+        
+        // Direct mapping for now - could implement logarithmic scaling later
+        return Math.max(0.05, audioBackend.spectrum[binIndex] || 0.05)
     }
     
     // Audio-reactive properties
@@ -81,20 +183,26 @@ WallpaperItem {
         }
     }
 
-    // Enhanced spectrum bars with more realistic audio simulation
+    // Enhanced spectrum bars with real FFT data support
     Repeater {
         id: spectrumRepeater
         anchors.fill: parent
         model: visualizationType === 0 ? 64 : 0
         
         Rectangle {
-            // Enhanced frequency response simulation
+            // Real-time spectrum calculation with fallback
+            readonly property real realSpectrum: getRealSpectrumValue(index)
             readonly property real freqMultiplier: (index < 12) ? root.bassLevel : 
                                                   (index < 24) ? root.midLevel : 
                                                   (index < 40) ? root.trebleLevel : root.audioPeak
             readonly property real baseAmp: 0.3 + 0.7 * freqMultiplier
             readonly property real randomFactor: Math.abs(Math.sin(root.t * (4 + index * 0.15) + index * 0.8))
-            readonly property real mag: Math.max(0.2, baseAmp * randomFactor * (0.7 + 0.5 * Math.sin(root.t * 6 + index * 0.3)) * root.audioSensitivity)
+            readonly property real simulatedMag: Math.max(0.2, baseAmp * randomFactor * (0.7 + 0.5 * Math.sin(root.t * 6 + index * 0.3)) * root.audioSensitivity)
+            
+            // Use real spectrum data when available, otherwise simulate
+            readonly property real mag: root.useRealAudio && audioBackend && audioBackend.audioActive ? 
+                                       Math.max(0.05, realSpectrum * root.audioSensitivity) : 
+                                       simulatedMag
             
             // Fixed positioning and sizing
             width: Math.max(6, parent.width / 64 * 0.8)
@@ -414,6 +522,13 @@ WallpaperItem {
                 text: "Audio: " + root.audioSource
                 color: "white" 
                 font.pointSize: 9 
+            }
+            Text {
+                text: "Backend: " + (root.useRealAudio && audioBackend && audioBackend.audioActive ? 
+                      "REAL (" + audioBackend.decibels.toFixed(1) + " dB)" : "SIMULATED")
+                color: root.useRealAudio && audioBackend && audioBackend.audioActive ? "#00ff00" : "#ffff00"
+                font.pointSize: 9
+                font.bold: true
             }
             Text { 
                 text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" : 
