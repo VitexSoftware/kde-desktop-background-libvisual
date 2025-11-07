@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+  <kcfgfile name=""/>
+  
+  <group name="General">
+    <entry name="visualizationType" type="Int">
+      <label>Type of visualization</label>
+      <default>0</default>
+    </entry>
+    
+    <entry name="audioSensitivity" type="Double">
+      <label>Audio sensitivity level</label>
+      <default>1.0</default>
+    </entry>
+    
+    <entry name="showInfo" type="Bool">
+      <label>Show information overlay</label>
+      <default>false</default>
+    </entry>
+    <entry name="audioSource" type="String">
+      <label>Selected audio source name</label>
+      <default>Default</default>
+    </entry>
+  </group>
+</kcfg>

@@ -1,0 +1,21 @@
+{
+  "KPackageStructure": "Plasma/Wallpaper",
+  "KPlugin": {
+    "Id": "org.kde.libvisual",
+    "Name": "LibVisual Audio Wallpaper",
+    "Description": "Real-time audio-reactive wallpaper using LibVisual/FFTW",
+    "Version": "0.1.0",
+    "Authors": [ { "Name": "VitexSoftware" } ],
+    "License": "GPL-3.0-or-later",
+    "Icon": "preferences-desktop-wallpaper",
+    "ServiceTypes": [ "Plasma/Wallpaper" ]
+  },
+  "X-KDE-PluginInfo-Name": "org.kde.libvisual",
+  "X-KDE-PluginInfo-Version": "0.1.0",
+  "X-KDE-PluginInfo-Author": "VitexSoftware",
+  "X-KDE-PluginInfo-Email": "vitex@vitexsoftware.cz",
+  "X-KDE-PluginInfo-License": "GPL-3.0-or-later",
+  "X-KDE-PluginInfo-Category": "Wallpaper",
+  "X-KDE-PluginInfo-EnabledByDefault": true,
+  "X-Plasma-MainScript": "ui/main.qml"
+}

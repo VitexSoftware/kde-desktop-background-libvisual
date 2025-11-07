@@ -1,0 +1,26 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Id": "org.kde.plasma.audiovisualizer",
+        "Name": "Audio Visualizer",
+        "Name[cs]": "Vizualizér Zvuku",
+        "Description": "Real-time audio spectrum visualization wallpaper using FFTW3",
+        "Description[cs]": "Tapeta s real-time spektrální vizualizací zvuku pomocí FFTW3",
+        "Category": "Wallpaper",
+        "Authors": [
+            {
+                "Name": "VitexSoftware",
+                "Email": "vitex@vitexsoftware.cz"
+            }
+        ],
+        "License": "GPL-3.0",
+        "Version": "1.0.0",
+        "Website": "https://github.com/VitexSoftware/kde-audio-visualizer-wallpaper"
+    },
+    "X-Plasma-API": "declarativeappletscript",
+    "X-Plasma-MainScript": "ui/main.qml",
+    "X-KDE-PlasmaImageWallpaper-AccentColor": {
+        "Light": "#3498db",
+        "Dark": "#2980b9"
+    }
+}

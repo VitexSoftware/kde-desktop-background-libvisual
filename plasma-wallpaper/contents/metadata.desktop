@@ -1,0 +1,17 @@
+[Desktop Entry]
+Name=Audio Visualizer
+Name[cs]=Vizualizér Zvuku
+Comment=Real-time audio spectrum visualization wallpaper using FFTW3
+Comment[cs]=Tapeta s real-time spektrální vizualizací zvuku pomocí FFTW3
+Icon=preferences-desktop-wallpaper
+
+Type=Service
+X-KDE-ServiceTypes=Plasma/Wallpaper
+
+X-KDE-PluginInfo-Author=VitexSoftware
+X-KDE-PluginInfo-Email=vitex@vitexsoftware.cz
+X-KDE-PluginInfo-Name=org.kde.plasma.audiovisualizer
+X-KDE-PluginInfo-Version=1.0.0
+X-KDE-PluginInfo-Website=https://github.com/VitexSoftware/kde-audio-visualizer-wallpaper
+X-KDE-PluginInfo-License=GPL-3.0
+X-KDE-PluginInfo-EnabledByDefault=true

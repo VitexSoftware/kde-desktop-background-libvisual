@@ -1,0 +1,19 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Id": "org.kde.libvisual",
+        "Name": "LibVisual Background",
+        "Name[cs]": "LibVisual Pozadí",
+        "Description": "Audio-reactive wallpaper using libvisual",
+        "Description[cs]": "Audio reaktivní tapeta s využitím libvisual",
+        "Category": "Wallpaper",
+        "Version": "0.1",
+        "Authors": [
+            { "Name": "VitexSoftware" }
+        ],
+        "License": "GPL-3.0-or-later",
+        "Icon": "preferences-desktop-wallpaper",
+        "ServiceTypes": [ "Plasma/Wallpaper" ]
+    },
+    "X-Plasma-MainScript": "ui/main.qml"
+}

@@ -1,0 +1,18 @@
+[Desktop Entry]
+Name=LibVisual Background
+Name[cs]=LibVisual Pozadí
+Comment=Audio visualization wallpaper using libvisual
+Comment[cs]=Tapeta s audio vizualizací pomocí libvisual
+Icon=preferences-desktop-wallpaper
+
+Type=Service
+X-KDE-ServiceTypes=Plasma/Wallpaper
+
+X-KDE-PluginInfo-Author=VitexSoftware
+X-KDE-PluginInfo-Email=vitex@vitexsoftware.cz
+X-KDE-PluginInfo-Name=org.kde.libvisual
+X-KDE-PluginInfo-Version=1.0
+X-KDE-PluginInfo-Website=https://github.com/VitexSoftware/kde-libvisual-wallpaper
+X-KDE-PluginInfo-Category=Wallpaper
+X-KDE-PluginInfo-License=GPL-3.0
+X-KDE-PluginInfo-EnabledByDefault=true

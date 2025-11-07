@@ -1,0 +1,43 @@
+[Desktop Entry]
+Encoding=UTF-8
+Keywords=wallpaper;background;audio;visualizer;spectrum;music
+Name=Audio Visualizer
+Name[cs]=Vizualizér Zvuku
+Comment=Real-time audio spectrum visualization wallpaper
+Comment[cs]=Tapeta s real-time spektrální vizualizací zvuku
+
+Type=Service
+Icon=preferences-desktop-wallpaper
+ServiceTypes=Plasma/Wallpaper
+
+X-Plasma-MainScript=ui/main.qml
+X-KDE-PluginInfo-Author=VitexSoftware
+X-KDE-PluginInfo-Email=vitex@vitexsoftware.cz
+X-KDE-PluginInfo-License=GPL-3.0
+X-KDE-PluginInfo-Name=org.kde.plasma.audiovisualizer
+X-KDE-PluginInfo-Version=1.0.0
+X-KDE-PluginInfo-Website=https://github.com/VitexSoftware/kde-audio-visualizer-wallpaper
+X-KDE-PluginInfo-Category=Wallpaper
+X-KDE-PluginInfo-Depends=
+
+X-Plasma-RequiredExtensions=LaunchApp
+
+[PropertyDef::audioDevice]
+Type=QString
+Default=Default
+
+[PropertyDef::sensitivity]
+Type=double
+Default=1.0
+
+[PropertyDef::colorScheme]
+Type=int
+Default=0
+
+[PropertyDef::showStatusIndicator]
+Type=bool
+Default=false
+
+[PropertyDef::smoothing]
+Type=double
+Default=0.8
