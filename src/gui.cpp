@@ -67,6 +67,21 @@ void ControlPanel::setupUI() {
     m_mainLayout->addWidget(visualGroup);
     m_mainLayout->addWidget(controlGroup);
     m_mainLayout->addStretch();
+    
+    // Add version info at bottom
+    QString version = QApplication::applicationVersion();
+    QLabel* versionLabel = new QLabel(
+        QString("<small>Version %1 | Engine: %2</small>")
+            .arg(version)
+            .arg("Loading..."),
+        this
+    );
+    versionLabel->setAlignment(Qt::AlignCenter);
+    versionLabel->setStyleSheet("color: gray;");
+    m_mainLayout->addWidget(versionLabel);
+    
+    // Store label for later update
+    m_versionLabel = versionLabel;
 }
 
 void ControlPanel::setupTrayIcon() {
@@ -142,6 +157,17 @@ void ControlPanel::updateAudioDeviceList(const std::vector<std::string>& devices
     }
     
     m_audioDeviceCombo->setCurrentIndex(currentIndex);
+}
+
+void ControlPanel::updateEngineInfo(const QString& engineName) {
+    if (m_versionLabel) {
+        QString version = QApplication::applicationVersion();
+        m_versionLabel->setText(
+            QString("<small>Version %1 | Engine: %2</small>")
+                .arg(version)
+                .arg(engineName)
+        );
+    }
 }
 
 void ControlPanel::onAudioDeviceChanged() {

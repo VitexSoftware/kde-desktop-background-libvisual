@@ -6,23 +6,34 @@
   <kcfgfile name=""/>
   
   <group name="General">
+    <entry name="audioDevice" type="String">
+      <label>Audio device name</label>
+      <default>Default</default>
+    </entry>
+    
+    <entry name="sensitivity" type="Double">
+      <label>Audio sensitivity level</label>
+      <default>1.0</default>
+    </entry>
+    
+    <entry name="colorScheme" type="Int">
+      <label>Color scheme selection</label>
+      <default>0</default>
+    </entry>
+    
     <entry name="visualizationType" type="Int">
       <label>Type of visualization</label>
       <default>0</default>
     </entry>
     
-    <entry name="audioSensitivity" type="Double">
-      <label>Audio sensitivity level</label>
-      <default>1.0</default>
-    </entry>
-    
-    <entry name="showInfo" type="Bool">
-      <label>Show information overlay</label>
+    <entry name="showStatusIndicator" type="Bool">
+      <label>Show status indicator</label>
       <default>false</default>
     </entry>
-    <entry name="audioSource" type="String">
-      <label>Selected audio source name</label>
-      <default>Default</default>
+    
+    <entry name="smoothing" type="Double">
+      <label>Audio smoothing factor</label>
+      <default>0.8</default>
     </entry>
   </group>
 </kcfg>

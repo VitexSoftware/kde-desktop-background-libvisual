@@ -33,7 +33,7 @@ bool Visualizer::initialize(int width, int height) {
 
     // Set video properties
     visual_video_set_dimension(m_video, m_width, m_height);
-    visual_video_set_depth(m_video, VISUAL_VIDEO_DEPTH_24BIT);
+    visual_video_set_depth(m_video, VISUAL_VIDEO_DEPTH_32BIT);
     
     if (visual_video_allocate_buffer(m_video) != VISUAL_OK) {
         std::cerr << "Failed to allocate video buffer" << std::endl;
@@ -72,10 +72,7 @@ void Visualizer::shutdown() {
         m_video = nullptr;
     }
 
-    if (m_initialized) {
-        visual_quit();
-        m_initialized = false;
-    }
+    m_initialized = false;
 }
 
 bool Visualizer::loadPlugin(const std::string& pluginName) {

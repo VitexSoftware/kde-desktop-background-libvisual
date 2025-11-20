@@ -560,6 +560,109 @@ WallpaperItem {
         }
     }
 
+    // Mandelbrot Zoom visualization (type 15)
+    Canvas {
+        anchors.fill: parent
+        visible: visualizationType === 15
+        
+        property real zoom: 0.5 + root.audioPeak * 2.0
+        property real centerX: -0.5 + Math.sin(root.t * 0.3) * 0.3 * root.audioSensitivity
+        property real centerY: 0.0 + Math.cos(root.t * 0.2) * 0.3 * root.audioSensitivity
+        
+        onPaint: {
+            var ctx = getContext("2d")
+            ctx.clearRect(0, 0, width, height)
+            
+            var maxIter = 50 + Math.floor(root.audioPeak * 50)
+            var zoomLevel = Math.pow(0.95, root.t * 10 + root.audioPeak * 20)
+            
+            for (var px = 0; px < width; px += 2) {
+                for (var py = 0; py < height; py += 2) {
+                    var x0 = (px / width - 0.5) * 3.5 * zoomLevel + centerX
+                    var y0 = (py / height - 0.5) * 2.0 * zoomLevel + centerY
+                    
+                    var x = 0.0
+                    var y = 0.0
+                    var iteration = 0
+                    
+                    while (x*x + y*y <= 4.0 && iteration < maxIter) {
+                        var xtemp = x*x - y*y + x0
+                        y = 2*x*y + y0
+                        x = xtemp
+                        iteration++
+                    }
+                    
+                    if (iteration < maxIter) {
+                        var ratio = iteration / maxIter
+                        var color = getColorForValue(ratio, 0.8 + root.audioPeak * 0.2)
+                        ctx.fillStyle = color
+                        ctx.fillRect(px, py, 2, 2)
+                    }
+                }
+            }
+        }
+        
+        Timer {
+            interval: 100
+            running: parent.visible
+            repeat: true
+            onTriggered: parent.requestPaint()
+        }
+    }
+    
+    // Fallback for unimplemented visualizations (types 4-14, 16-18)
+    Rectangle {
+        anchors.fill: parent
+        visible: visualizationType >= 4 && visualizationType <= 18 && visualizationType !== 15
+        color: Qt.rgba(0.05, 0.05, 0.1, 0.95)
+        
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "🎵"
+                font.pixelSize: 72
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Visualization Not Yet Implemented"
+                font.pixelSize: 24
+                font.bold: true
+                color: Qt.rgba(0.7, 0.7, 0.8, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Type: " + visualizationType
+                font.pixelSize: 16
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Available: Spectrum (0), Waveform (1), Oscilloscope (2),\nFractal (3), Mandelbrot (15)"
+                font.pixelSize: 14
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
+        
+        // Animated audio-reactive pulse
+        Rectangle {
+            anchors.centerIn: parent
+            width: 200 + root.audioPeak * 100
+            height: width
+            radius: width / 2
+            color: "transparent"
+            border.color: Qt.rgba(0.4, 0.4, 0.5, 0.3 * root.audioPeak)
+            border.width: 2
+        }
+    }
+
     // Information overlay
     Rectangle {
         id: info

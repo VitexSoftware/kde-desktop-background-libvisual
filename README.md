@@ -7,11 +7,12 @@ Application for rendering audio visualizations on KDE desktop environment backgr
 ## Features
 
 - Rendering libvisual visualizations directly on desktop background
+- Support for 13+ libvisual plugins (fractals, waves, spectrum analyzers, etc.)
+- Optional projectM support with 4,188+ Milkdrop-compatible presets
 - Support for various audio inputs (PulseAudio/ALSA)
 - GUI control via system tray
 - Automatic switching between visualization plugins
 - Settings saved to configuration file
-- Support for various libvisual plugins (fractals, waves, etc.)
 
 ## Dependencies
 
@@ -20,6 +21,9 @@ Application for rendering audio visualizations on KDE desktop environment backgr
 sudo apt install build-essential cmake qt6-base-dev qt6-tools-dev \
                  libvisual-0.4-dev libpulse-dev libx11-dev \
                  libxrender-dev pkg-config
+
+# Optional: For projectM support (4,188+ visualization presets)
+sudo apt install libprojectm-dev projectm-data
 ```
 
 ### Fedora/CentOS:
@@ -116,14 +120,34 @@ width=1920
 height=1080
 ```
 
-## Available libvisual plugins
+## Available Visualizations
 
-Application automatically detects installed libvisual plugins. Common plugins:
-- `gforce` - Abstract effects
+### LibVisual Plugins (13 included)
+
+Application automatically detects installed libvisual plugins:
+- `jess` - Abstract effects
+- `bumpscope` - Oscilloscope/waveform
+- `corona` - Plasma/corona effects
+- `lv_flower` - Flower pattern visualization
 - `infinite` - Infinite fractals
 - `jakdaw` - Spectral analyzer
+- `lv_analyzer` - Audio spectrum analyzer
 - `lv_scope` - Oscilloscope
-- `nebulus` - Nebula effects
+- `madspin` - Spinning effects
+- `nastyfft` - FFT-based visualization
+- `oinksie` - Abstract effects
+- And more...
+
+### ProjectM Presets (Optional)
+
+When projectM packages are installed (`libprojectm3` and `projectm-data`),
+you gain access to 4,188+ Milkdrop-compatible visualization presets including:
+- Classic Milkdrop presets from Winamp
+- Tryptonaut collection
+- BLTC201 collection
+- Various artist collections
+
+For more details, see [VISUALIZATIONS.md](VISUALIZATIONS.md).
 
 ## Troubleshooting
 

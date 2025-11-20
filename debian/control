@@ -12,6 +12,9 @@ Build-Depends:
  libpulse-dev,
  libx11-dev,
  libxrender-dev,
+ libgl-dev,
+ libprojectm-dev,
+ projectm-data,
 Standards-Version: 4.7.0
 Homepage: https://github.com/VitexSoftware/kde-desktop-background-libvisual
 Rules-Requires-Root: no
@@ -28,6 +31,9 @@ Depends:
  pulseaudio,
 Recommends:
  kde-plasma-desktop,
+Suggests:
+ libprojectm3,
+ projectm-data,
 Description: Audio visualization on KDE desktop background using libvisual
  LibVisual Desktop Background is an application that renders audio
  visualizations directly on the KDE desktop background using the libvisual
@@ -36,7 +42,8 @@ Description: Audio visualization on KDE desktop background using libvisual
  .
  Features:
   * Real-time audio visualization on desktop background
-  * Support for multiple libvisual plugins
+  * Support for multiple libvisual plugins (13 included)
+  * Optional projectM support (4,188+ Milkdrop-compatible presets)
   * PulseAudio integration for audio input
   * Qt-based control panel with system tray integration
   * Automatic plugin switching with configurable intervals
@@ -45,3 +52,6 @@ Description: Audio visualization on KDE desktop background using libvisual
  The application runs as a background daemon and can be controlled through
  a system tray interface, making it easy to customize the visualization
  experience without interrupting your workflow.
+ .
+ For enhanced visualization quality with thousands of presets, install the
+ suggested projectM packages (libprojectm3 and projectm-data).

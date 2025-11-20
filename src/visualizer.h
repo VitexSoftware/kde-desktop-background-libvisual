@@ -5,24 +5,26 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include "visualization_engine.h"
 
-class Visualizer {
+class Visualizer : public VisualizationEngine {
 public:
     Visualizer();
-    ~Visualizer();
+    ~Visualizer() override;
 
-    bool initialize(int width, int height);
-    void shutdown();
+    bool initialize(int width, int height) override;
+    void shutdown() override;
 
-    bool loadPlugin(const std::string& pluginName);
-    std::vector<std::string> getAvailablePlugins();
+    bool loadPlugin(const std::string& pluginName) override;
+    std::vector<std::string> getAvailablePlugins() override;
 
-    bool processAudio(const float* audioData, size_t samples);
-    bool render();
+    bool processAudio(const float* audioData, size_t samples) override;
+    bool render() override;
 
-    unsigned char* getVideoData();
-    int getWidth() const { return m_width; }
-    int getHeight() const { return m_height; }
+    unsigned char* getVideoData() override;
+    int getWidth() const override { return m_width; }
+    int getHeight() const override { return m_height; }
+    std::string getEngineName() const override { return "libvisual"; }
 
 private:
     VisVideo* m_video;
