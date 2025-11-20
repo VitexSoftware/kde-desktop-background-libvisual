@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.plasmoid 2.0
+import QtQuick
+import QtQuick.Controls
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid
 import AudioVisualizer 1.0
 
 WallpaperItem {
@@ -17,11 +17,12 @@ WallpaperItem {
     property real audioSensitivity: root.configuration.audioSensitivity  
     property bool showInfo: root.configuration.showInfo
     property string audioSource: root.configuration.audioSource
+    property int colorScheme: root.configuration.colorScheme
     property real t: 0
     
     // Audio backend configuration
     property bool useRealAudio: true   // Enable real audio by default now that module works
-    property bool debugAudio: false   // Disable ALL debug logging to reduce console spam
+    property bool debugAudio: false   // Disable debug logging
     
     // Real audio backend instance
     AudioVisualizer {
@@ -29,10 +30,10 @@ WallpaperItem {
         
         Component.onCompleted: {
             if (debugAudio) {
-                // console.log("AudioVisualizer - Audio backend initialized successfully!")
-                // console.log("AudioVisualizer - Device count:", deviceCount)
-                // console.log("AudioVisualizer - Initial running state:", running)
-                // console.log("AudioVisualizer - Unified module loaded successfully!")
+                console.log("AudioVisualizer - Audio backend initialized successfully!")
+                console.log("AudioVisualizer - Device count:", deviceCount)
+                console.log("AudioVisualizer - Initial running state:", running)
+                console.log("AudioVisualizer - Unified module loaded successfully!")
             }
             // Start audio processing
             start()
@@ -179,6 +180,54 @@ WallpaperItem {
     property real bassLevel: 0.1
     property real midLevel: 0.1
     property real trebleLevel: 0.1
+    
+    // Color scheme functions
+    // 0: Rainbow Spectrum, 1: Blue Gradient, 2: Fire, 3: Plasma, 4: Monochrome
+    function getColorForValue(value, intensity) {
+        switch(colorScheme) {
+            case 0: // Rainbow Spectrum
+                var hue = value * 360
+                var sat = 0.8 + intensity * 0.2
+                var val = 0.5 + intensity * 0.5
+                return Qt.hsva(hue, sat, val, 0.9)
+            case 1: // Blue Gradient
+                return Qt.rgba(0.1 + intensity * 0.3, 0.3 + intensity * 0.5, 0.5 + intensity * 0.5, 0.9)
+            case 2: // Fire
+                return Qt.rgba(0.8 + intensity * 0.2, 0.3 * intensity, 0.1 * intensity, 0.9)
+            case 3: // Plasma
+                return Qt.rgba(0.5 + intensity * 0.5, 0.2 * intensity, 0.5 + intensity * 0.5, 0.9)
+            case 4: // Monochrome
+                var gray = 0.3 + intensity * 0.7
+                return Qt.rgba(gray, gray, gray, 0.9)
+            default:
+                return Qt.rgba(0.5, 0.5, 0.5, 0.9)
+        }
+    }
+    
+    function getBackgroundColor(position, isTop) {
+        var t = root.t * 0.2
+        var base = isTop ? 0.25 : 0.05
+        var mod = isTop ? Math.sin(t) : Math.cos(t)
+        
+        switch(colorScheme) {
+            case 0: // Rainbow Spectrum
+                return isTop ? Qt.rgba(0.5 + 0.25*mod, 0.25 + 0.25*mod, 0.5, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.05, 0.15, 1)
+            case 1: // Blue Gradient
+                return Qt.rgba(0.0, base + 0.25*mod, 0.5 + (isTop ? 0.25*mod : 0), 1)
+            case 2: // Fire
+                return isTop ? Qt.rgba(0.5 + 0.25*mod, base + 0.25*mod, 0.0, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.05, 0.0, 1)
+            case 3: // Plasma
+                return isTop ? Qt.rgba(0.5, 0.0, base + 0.25*mod, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.0, 0.05, 1)
+            case 4: // Monochrome
+                var gray = base + 0.15*mod
+                return Qt.rgba(gray, gray, gray, 1)
+            default:
+                return Qt.rgba(base, base, base, 1)
+        }
+    }
 
     // Background gradient shifting subtly
     Rectangle {
@@ -186,17 +235,11 @@ WallpaperItem {
         gradient: Gradient {
             GradientStop { 
                 position: 0.0; 
-                color: visualizationType === 0 ? Qt.rgba(0.0, 0.25 + 0.25*Math.sin(root.t*0.2), 0.5, 1) :
-                       visualizationType === 1 ? Qt.rgba(0.5, 0.25 + 0.25*Math.sin(root.t*0.2), 0.0, 1) :
-                       visualizationType === 2 ? Qt.rgba(0.25 + 0.25*Math.sin(root.t*0.2), 0.0, 0.5, 1) :
-                       Qt.rgba(0.5, 0.0, 0.25 + 0.25*Math.sin(root.t*0.2), 1)
+                color: getBackgroundColor(0.0, true)
             }
             GradientStop { 
                 position: 1.0; 
-                color: visualizationType === 0 ? Qt.rgba(0.0, 0.05, 0.15 + 0.15*Math.cos(root.t*0.2), 1) :
-                       visualizationType === 1 ? Qt.rgba(0.15 + 0.15*Math.cos(root.t*0.2), 0.05, 0.0, 1) :
-                       visualizationType === 2 ? Qt.rgba(0.05, 0.0, 0.15 + 0.15*Math.cos(root.t*0.2), 1) :
-                       Qt.rgba(0.15 + 0.15*Math.cos(root.t*0.2), 0.0, 0.05, 1)
+                color: getBackgroundColor(1.0, false)
             }
         }
     }
@@ -230,12 +273,7 @@ WallpaperItem {
             radius: 2
             
             // Enhanced reactive coloring with guaranteed visibility
-            color: Qt.rgba(
-                Math.max(0.4, 0.2 + 0.6 * Math.min(mag, 1.0)), 
-                Math.max(0.3, 0.3 + 0.5 * root.audioPeak), 
-                Math.max(0.5, 0.6 + 0.4 * freqMultiplier), 
-                0.95 // High opacity for visibility
-            )
+            color: getColorForValue(index / 64.0, Math.min(mag, 1.0))
             
             // Pulse effect for high peaks
             scale: mag > 0.7 ? (1.0 + 0.2 * Math.sin(root.t * 15)) : 1.0
@@ -330,7 +368,8 @@ WallpaperItem {
                 var ctx = getContext("2d")
                 ctx.clearRect(0, 0, width, height)
                 
-                ctx.strokeStyle = Qt.rgba(0.3 + 0.5 * root.audioPeak, 0.7, 0.9, 0.8)
+                var primaryColor = getColorForValue(0.5, 0.7 + 0.3 * root.audioPeak)
+                ctx.strokeStyle = primaryColor
                 ctx.lineWidth = 2 + root.audioPeak * 4
                 ctx.beginPath()
                 
@@ -359,7 +398,8 @@ WallpaperItem {
                 ctx.stroke()
                 
                 // Secondary harmonic wave
-                ctx.strokeStyle = Qt.rgba(0.9, 0.4 + 0.4 * root.midLevel, 0.6, 0.5)
+                var secondaryColor = getColorForValue(0.7, 0.5 + 0.3 * root.midLevel)
+                ctx.strokeStyle = secondaryColor
                 ctx.lineWidth = 1 + root.midLevel * 3
                 ctx.beginPath()
                 for (var i = 0; i < steps; i++) {
@@ -584,8 +624,8 @@ WallpaperItem {
 
     Component.onCompleted: {
         if (debugAudio) {
-            // console.log("LibVisual Background WallpaperItem loaded")
-            // console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
+            console.log("LibVisual Background WallpaperItem loaded")
+            console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
         }
     }
 }

@@ -1,9 +1,14 @@
 #!/usr/bin/make -f
 
 %:
-	dh $@
+	dh $@ --buildsystem=cmake
 
 override_dh_auto_configure:
+	# Sync version from CMakeLists.txt to metadata.json and config.qml
+	$(eval VERSION := $(shell grep "^project(libvisual-bg VERSION" CMakeLists.txt | sed 's/.*VERSION \([0-9.]*\)).*/\1/'))
+	@echo "Syncing version $(VERSION) to metadata.json and config.qml"
+	sed -i 's/"Version": "[0-9.]\+"/"Version": "$(VERSION)"/' plasma-wallpapers/org.kde.libvisual/metadata.json
+	sed -i 's/Version [0-9.]\+ - VitexSoftware/Version $(VERSION) - VitexSoftware/' plasma-wallpapers/org.kde.libvisual/contents/ui/config.qml
 	dh_auto_configure -- \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX=/usr \
