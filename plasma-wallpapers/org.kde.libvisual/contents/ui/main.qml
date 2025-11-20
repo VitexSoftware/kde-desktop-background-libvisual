@@ -18,11 +18,12 @@ WallpaperItem {
     property bool showInfo: root.configuration.showInfo
     property string audioSource: root.configuration.audioSource
     property int colorScheme: root.configuration.colorScheme
+    property bool showStatusIndicator: root.configuration.showStatusIndicator
     property real t: 0
     
     // Audio backend configuration
     property bool useRealAudio: true   // Enable real audio by default now that module works
-    property bool debugAudio: false   // Disable debug logging
+    property bool debugAudio: true   // Enable debug logging temporarily
     
     // Real audio backend instance
     AudioVisualizer {
@@ -721,6 +722,42 @@ WallpaperItem {
                 font.pointSize: 9
                 wrapMode: Text.Wrap
                 width: parent.width
+            }
+        }
+    }
+
+    // Status indicator (small corner indicator)
+    Rectangle {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 10
+        width: 100
+        height: 50
+        color: Qt.rgba(0, 0, 0, 0.7)
+        radius: 6
+        border.color: root.useRealAudio && audioBackend && audioBackend.running ? "#00ff00" : "#ff9900"
+        border.width: 2
+        visible: root.showStatusIndicator
+        
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: root.useRealAudio && audioBackend && audioBackend.running ? "●" : "○"
+                color: root.useRealAudio && audioBackend && audioBackend.running ? "#00ff00" : "#ff9900"
+                font.pixelSize: 16
+                font.bold: true
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: root.useRealAudio && audioBackend && audioBackend.running ? 
+                      audioBackend.decibels.toFixed(0) + "dB" : "SIM"
+                color: "white"
+                font.pixelSize: 10
+                font.family: "monospace"
             }
         }
     }

@@ -9,6 +9,7 @@ KCM.SimpleKCM {
     
     property alias cfg_audioDevice: audioDeviceCombo.currentText
     property alias cfg_sensitivity: sensitivitySlider.value
+    property alias cfg_audioSensitivity: sensitivitySlider.value
     property alias cfg_colorScheme: colorSchemeCombo.currentIndex
     property alias cfg_visualizationType: visualizationCombo.currentIndex
     property alias cfg_showStatusIndicator: statusIndicatorCheck.checked
@@ -261,9 +262,47 @@ ComboBox {
                         }
                     }
 
+                    // Mandelbrot preview (type 15)
+                    Canvas {
+                        anchors.fill: parent
+                        visible: visualizationCombo.currentIndex === 15
+                        property real zoom: 0.5
+                        
+                        onPaint: {
+                            var ctx = getContext("2d")
+                            ctx.clearRect(0, 0, width, height)
+                            
+                            var maxIter = 30
+                            var zoomLevel = 0.5 + Math.sin(visualizationPreview.previewTime) * 0.3
+                            
+                            for (var px = 0; px < width; px += 2) {
+                                for (var py = 0; py < height; py += 2) {
+                                    var x0 = (px / width - 0.5) * 3 * zoomLevel - 0.5
+                                    var y0 = (py / height - 0.5) * 2 * zoomLevel
+                                    
+                                    var x = 0, y = 0, iteration = 0
+                                    while (x*x + y*y <= 4 && iteration < maxIter) {
+                                        var xtemp = x*x - y*y + x0
+                                        y = 2*x*y + y0
+                                        x = xtemp
+                                        iteration++
+                                    }
+                                    
+                                    if (iteration < maxIter) {
+                                        var ratio = iteration / maxIter
+                                        var hue = ratio * 360
+                                        ctx.fillStyle = Qt.hsva(hue, 0.8, 0.8, 1)
+                                        ctx.fillRect(px, py, 2, 2)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // Generic preview for other types
                     Item {
                         anchors.fill: parent
-                        visible: visualizationCombo.currentIndex >= 2
+                        visible: visualizationCombo.currentIndex >= 2 && visualizationCombo.currentIndex !== 15
                         
                         Repeater {
                             model: 4
@@ -281,12 +320,19 @@ ComboBox {
                 }
 
                 Timer {
-                    interval: 33
+                    interval: 100
                     running: true
                     repeat: true
                     onTriggered: {
-                        visualizationPreview.previewTime += 0.033
-                        visualizationPreview.children[0].children[1].requestPaint()
+                        visualizationPreview.previewTime += 0.1
+                        // Repaint waveform canvas
+                        if (visualizationCombo.currentIndex === 1) {
+                            visualizationPreview.children[0].children[1].requestPaint()
+                        }
+                        // Repaint Mandelbrot canvas
+                        if (visualizationCombo.currentIndex === 15) {
+                            visualizationPreview.children[0].children[2].requestPaint()
+                        }
                     }
                 }
             }
@@ -348,10 +394,8 @@ ComboBox {
                 text: i18n("Test Visualization")
                 icon.name: "media-playback-start"
                 onClicked: {
-                    // Trigger test mode
-                    if (typeof AudioVisualizerBackend !== 'undefined') {
-                        AudioVisualizerBackend.testMode()
-                    }
+                    // Play test tone
+                    Qt.openUrlExternally("file:///usr/share/sounds/alsa/Front_Center.wav")
                 }
             }
             
@@ -369,7 +413,7 @@ ComboBox {
         }
         
         Label {
-            text: i18n("Version 1.1.3 - VitexSoftware")
+            text: i18n("Version 1.1.4 - VitexSoftware")
             color: Kirigami.Theme.disabledTextColor
             Kirigami.FormData.label: i18n("Version:")
         }
