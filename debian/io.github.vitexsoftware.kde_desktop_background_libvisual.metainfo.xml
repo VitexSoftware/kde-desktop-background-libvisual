@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.vitexsoftware.kde_desktop_background_libvisual</id>
+  <metadata_license>MIT</metadata_license>
+  <project_license>GPL-3+</project_license>
+  <name>kde-desktop-background-libvisual</name>
+  <summary>Audio visualization on KDE desktop background using libvisual</summary>
+  <description>
+    <p>
+      LibVisual Desktop Background is an application that renders audio visualizations directly on the KDE desktop background using the libvisual library. It supports various visualization plugins including fractals, waveforms, and spectrum analyzers. Features: * Real-time audio visualization on desktop background * Support for multiple libvisual plugins (13 included) * Optional projectM support (4,188+ Milkdrop-compatible presets) * PulseAudio integration for audio input * Qt-based control panel with system tray integration * Automatic plugin switching with configurable intervals * Persistent configuration storage The application runs as a background daemon and can be controlled through a system tray interface, making it easy to customize the visualization experience without interrupting your workflow. For enhanced visualization quality with thousands of presets, install the suggested projectM packages (libprojectm3 and projectm-data).
+    </p>
+  </description>
+  <categories>
+    <category>Utility</category>
+  </categories>
+  <url type="homepage">https://github.com/VitexSoftware/kde-desktop-background-libvisual</url>
+  <url type="bugtracker">https://github.com/VitexSoftware/kde-desktop-background-libvisual/issues</url>
+  <developer id="cz.vitexsoftware">
+    <name>VitexSoftware</name>
+  </developer>
+  <content_rating type="oars-1.1"/>
+</component>
