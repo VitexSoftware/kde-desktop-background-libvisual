@@ -6,6 +6,7 @@
 #pragma once
 
 #include <QObject>
+#include <QProcess>
 #include <QTimer>
 #include <QVariantList>
 #include <QtQml/qqml.h>
@@ -59,6 +60,8 @@ public:
     Q_INVOKABLE void start();
     Q_INVOKABLE void stop();
     Q_INVOKABLE QStringList getAudioSources();
+    // Returns only capture (microphone-like) sources – no .monitor loopbacks
+    Q_INVOKABLE QVariantList getInputSources();
 
 signals:
     void decibelsChanged();

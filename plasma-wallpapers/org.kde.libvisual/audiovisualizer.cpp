@@ -69,16 +69,22 @@ void AudioVisualizer::setRunning(bool running)
 void AudioVisualizer::setAudioSource(const QString &source)
 {
     if (m_audioSource == source) return;
-    
-    qDebug() << "AudioVisualizer: Setting audio source to" << source;
+
+    qDebug() << "AudioVisualizer: Switching audio source to" << source;
     m_audioSource = source;
     emit audioSourceChanged();
-    
-    // Restart if running to use new source
+
+    // Close the old PA connection and reopen with the new source.
+    // We always attempt to (re)start so that switching from a device with no
+    // mic to one that has a mic starts capturing without user interaction.
     if (m_running) {
-        stop();
-        start();
+        m_running = false;
+        m_timer->stop();
+        emit runningChanged();
     }
+    cleanupPulseAudio();
+    initializePulseAudio();
+    start(); // no-op if PA init failed (e.g. no mic on selected device)
 }
 
 void AudioVisualizer::setSensitivity(qreal sensitivity)
@@ -137,8 +143,54 @@ void AudioVisualizer::stop()
 
 QStringList AudioVisualizer::getAudioSources()
 {
-    // For now return basic sources, can be extended to enumerate actual PulseAudio sources
-    return {"default", "monitor", "microphone"};
+    return {"default"};
+}
+
+QVariantList AudioVisualizer::getInputSources()
+{
+    QVariantList result;
+
+    // Always offer the PulseAudio default capture source first
+    QVariantMap defaultEntry;
+    defaultEntry["name"] = "default";
+    defaultEntry["description"] = tr("Default Input Device");
+    result << defaultEntry;
+
+    // Enumerate sources via pactl (available on both PulseAudio and PipeWire)
+    QProcess pactl;
+    pactl.start("pactl", {"list", "sources"});
+    if (!pactl.waitForFinished(3000)) return result;
+
+    // Parse "Name:" and "Description:" lines, emit one entry per source block
+    QString name, description;
+    bool inSource = false;
+    const QString out = QString::fromUtf8(pactl.readAllStandardOutput());
+    for (const QString &line : out.split('\n')) {
+        const QString trimmed = line.trimmed();
+        if (trimmed.startsWith("Source #")) {
+            // Flush previous source
+            if (inSource && !name.isEmpty() && !name.endsWith(".monitor")) {
+                QVariantMap entry;
+                entry["name"] = name;
+                entry["description"] = description.isEmpty() ? name : description;
+                result << entry;
+            }
+            name.clear(); description.clear(); inSource = true;
+        } else if (inSource && trimmed.startsWith("Name:")) {
+            name = trimmed.mid(5).trimmed();
+        } else if (inSource && trimmed.startsWith("Description:")) {
+            description = trimmed.mid(12).trimmed();
+        }
+    }
+    // Flush last block
+    if (inSource && !name.isEmpty() && !name.endsWith(".monitor")) {
+        QVariantMap entry;
+        entry["name"] = name;
+        entry["description"] = description.isEmpty() ? name : description;
+        result << entry;
+    }
+
+    return result;
 }
 
 void AudioVisualizer::processAudio()

@@ -1,3 +1,21 @@
+kde-desktop-background-libvisual (1.1.5-1) unstable; urgency=medium
+
+  * Implement all 19 visualization types (Circular Spectrum, Plasma, Starfield,
+    Fireworks, Matrix Rain, DNA Helix, Particle Storm, Ripple Effect,
+    Tunnel Vision, Spiral Galaxy, Lightning, Geometric Dance, Audio Bars 3D,
+    Kaleidoscope) — no more "Not Yet Implemented" placeholder
+  * Config preview widget now shows a unique animated mini-preview for every
+    visualization type, updating live as the user changes the selection
+  * Audio device combo now enumerates only capture/microphone sources via
+    pactl, filtering out monitor loopbacks; shows human-readable descriptions
+  * Audio level indicator in config dialog is now driven by the real
+    AudioVisualizer backend (was a sine-wave simulation); reports -60 dB
+    when no microphone is connected to the selected device
+  * Fix setAudioSource() to properly reconnect PulseAudio when device changes
+  * Fix cfg_audioDevice to store PA source name, not display text
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Fri, 15 May 2026 21:21:41 +0200
+
 kde-desktop-background-libvisual (1.1.3-1) unstable; urgency=medium
 
   * Version bump to 1.1.3

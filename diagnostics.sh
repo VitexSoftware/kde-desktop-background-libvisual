@@ -123,17 +123,105 @@ else
   warn "qdbus not available"
 fi
 
-section "Backend Singleton Check (heuristic)"
-# We can't instantiate QML headless easily; we just check that the plugin exported symbol count > 0.
-if [[ $FOUND_SO -eq 1 ]]; then
-  nm -D --defined-only "${PLUGIN_SO_GLOB[0]}" 2>/dev/null | grep -q 'LibVisualWallpaper' && ok "Symbol LibVisualWallpaper present" || warn "LibVisualWallpaper symbol not found in first .so"
+section "AudioVisualizer backend symbols"
+# The implementation lives in libaudiovisualizer_probe.so (the backing library).
+# The QML plugin loader is audiovisualizer_probeplugin.so (just registers types).
+AV_LIB_PATHS=(
+  "$HOME/.local/lib/x86_64-linux-gnu/libaudiovisualizer_probe.so"
+  "$HOME/.local/lib/qt6/qml/AudioVisualizer/audiovisualizer_probeplugin.so"
+  "$HOME/.local/lib/x86_64-linux-gnu/qml/AudioVisualizer/audiovisualizer_probeplugin.so"
+)
+FOUND_AV=0
+FOUND_AV_SYM=0
+FOUND_GIS=0
+for f in "${AV_LIB_PATHS[@]}"; do
+  [[ -f "$f" ]] || continue
+  FOUND_AV=1
+  if command -v nm >/dev/null; then
+    # Capture to variable first — avoids SIGPIPE with set -o pipefail when grep exits early
+    _syms=$(nm "$f" 2>/dev/null | c++filt || true)
+    grep -q 'AudioVisualizer' <<< "$_syms" \
+      && { ok "Symbol AudioVisualizer present in $(basename "$f")"; FOUND_AV_SYM=1; } \
+      || true
+    if grep -q 'getInputSources' <<< "$_syms"; then
+      ok "getInputSources() compiled in $(basename "$f") — input-device filtering available"
+      FOUND_GIS=1
+    fi
+  fi
+done
+if command -v nm >/dev/null; then
+  [[ $FOUND_GIS -eq 1 ]] \
+    || { err "getInputSources not found in any AudioVisualizer library — rebuild required"; ((ISSUES++)); }
+fi
+if [[ $QUICK -eq 0 ]]; then
+  for f in "${AV_LIB_PATHS[@]}"; do
+    [[ -f "$f" ]] || continue
+    MISSING=$(ldd "$f" 2>/dev/null | grep "not found" || true)
+    [[ -z "$MISSING" ]] && ok "No missing libs in $(basename "$f")" \
+                        || { err "Missing libs in $(basename "$f"): $MISSING"; ((ISSUES++)); }
+  done
+fi
+[[ $FOUND_AV -eq 1 ]] || { err "AudioVisualizer library not found in expected paths"; ((ISSUES++)); }
+
+section "config.qml feature checks"
+CONFIG_QML="$PKG_DIR/contents/ui/config.qml"
+if [[ -f "$CONFIG_QML" ]]; then
+  grep -q 'import AudioVisualizer 1.0' "$CONFIG_QML" \
+    && ok "config.qml imports AudioVisualizer 1.0" \
+    || { err "config.qml missing AudioVisualizer import"; ((ISSUES++)); }
+  grep -q 'configAudio.decibels' "$CONFIG_QML" \
+    && ok "audio level bound to real backend" \
+    || { err "audio level not bound to real backend (fake simulation?)"; ((ISSUES++)); }
+  grep -q 'getInputSources' "$CONFIG_QML" \
+    && ok "device combo calls getInputSources()" \
+    || { err "device combo does not call getInputSources()"; ((ISSUES++)); }
+  # Count visualization types
+  VIZ_COUNT=$(grep -c 'i18n("' "$CONFIG_QML" | head -1 || true)
+  TYPE_COUNT=$(grep -o 'type === [0-9]*' "$CONFIG_QML" 2>/dev/null | sort -u | wc -l)
+  ok "Preview canvas handles $TYPE_COUNT distinct visualization type(s)"
+  [[ "$TYPE_COUNT" -ge 19 ]] || warn "Expected 19 viz types in preview, found $TYPE_COUNT"
+else
+  err "config.qml not found at $CONFIG_QML"; ((ISSUES++))
+fi
+
+section "main.qml – visualization completeness"
+MAIN_QML="$PKG_DIR/contents/ui/main.qml"
+if [[ -f "$MAIN_QML" ]]; then
+  IMPL_COUNT=$(grep -o 'visualizationType === [0-9]*' "$MAIN_QML" 2>/dev/null | sort -u | wc -l)
+  ok "main.qml handles $IMPL_COUNT visualization type(s)"
+  [[ "$IMPL_COUNT" -ge 19 ]] || warn "Expected ≥19 handled types, found $IMPL_COUNT"
+  ! grep -q 'Visualization Not Yet Implemented' "$MAIN_QML" \
+    && ok "No 'Not Yet Implemented' placeholder" \
+    || { err "'Not Yet Implemented' placeholder still present"; ((ISSUES++)); }
+else
+  err "main.qml not found"; ((ISSUES++))
+fi
+
+section "PulseAudio / PipeWire input sources"
+if command -v pactl >/dev/null; then
+  kv "pactl version" "$(pactl --version 2>/dev/null | head -1)"
+  INPUT_SOURCES=$(pactl list short sources 2>/dev/null | grep -v '\.monitor' || true)
+  INPUT_COUNT=$(echo "$INPUT_SOURCES" | grep -c . || true)
+  if [[ "$INPUT_COUNT" -gt 0 ]]; then
+    ok "$INPUT_COUNT capture source(s) available (monitors excluded)"
+    echo "$INPUT_SOURCES" | while IFS=$'\t' read -r idx name rest; do
+      printf '  %3s  %s\n' "$idx" "$name"
+    done
+  else
+    warn "No capture sources found (is a microphone connected?)"
+  fi
+  MONITOR_COUNT=$(pactl list short sources 2>/dev/null | grep -c '\.monitor' || true)
+  ok "$MONITOR_COUNT monitor source(s) correctly excluded from device combo"
+else
+  err "pactl not found — install pulseaudio-utils or pipewire-pulse"; ((ISSUES++))
 fi
 
 if [[ $QUICK -eq 0 ]]; then
-  section "Recent plasmashell log (libvisual lines)"
-  # Tail last 200 user journal lines for libvisual
+  section "Recent plasmashell log (libvisual / AudioVisualizer lines)"
   if command -v journalctl >/dev/null; then
-    journalctl --user -n 200 2>/dev/null | grep -i libvisual || echo "(no recent libvisual log lines)"
+    journalctl --user -n 300 2>/dev/null \
+      | grep -iE 'libvisual|audiovisualizer|org\.kde\.libvisual' \
+      || echo "(no recent relevant log lines)"
   else
     warn "journalctl unavailable"
   fi

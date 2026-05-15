@@ -1,207 +1,186 @@
 # LibVisual Desktop Background
 
-Application for rendering audio visualizations on KDE desktop environment background using libvisual library.
+Audio-reactive wallpaper plugin for KDE Plasma 6. Renders real-time visualizations on the desktop background, driven by live microphone or audio input via PulseAudio/PipeWire.
 
 ![waveform screenshot](waveform.png?raw=true)
 
+**Version 1.1.5**
+
 ## Features
 
-- Rendering libvisual visualizations directly on desktop background
-- Support for 13+ libvisual plugins (fractals, waves, spectrum analyzers, etc.)
-- Optional projectM support with 4,188+ Milkdrop-compatible presets
-- Support for various audio inputs (PulseAudio/ALSA)
-- GUI control via system tray
-- Automatic switching between visualization plugins
-- Settings saved to configuration file
+- 19 built-in visualization types, all audio-reactive
+- GPU-accelerated Mandelbrot zoom via GLSL shader (NVIDIA/AMD/Intel)
+- Real-time FFT spectrum analysis using FFTW3
+- PulseAudio/PipeWire integration — reads from any capture source
+- Configuration dialog with live audio level meter and per-type animated preview
+- Input-only device selector — monitors and loopback sources are excluded
+- Color scheme selection (Rainbow, Blue Gradient, Fire, Plasma, Monochrome)
+- Status indicator overlay (optional)
+
+## Visualization Types
+
+| # | Name | Description |
+|---|------|-------------|
+| 0 | Spectrum Analyzer | 64-bar FFT spectrum, height and color driven by frequency magnitude |
+| 1 | Waveform | Full-screen dual sine wave, amplitude tracks audio peak |
+| 2 | Lissajous | XY oscilloscope Lissajous figures, reactive to bass/treble |
+| 3 | Circular Burst | 50 concentric circles pulsing with frequency bands |
+| 4 | Circular Spectrum | 64 radial bars arranged in a circle |
+| 5 | Plasma | 8 animated colored blobs with sine-driven motion |
+| 6 | Starfield | 120 stars flying outward from center, speed scales with peak |
+| 7 | Fireworks | Particle bursts spawned on bass beats |
+| 8 | Matrix Rain | Falling green characters, speed driven by treble |
+| 9 | DNA Helix | Two intertwined sine strands with connecting rungs |
+| 10 | Particle Storm | 150 particles orbiting in audio-reactive paths |
+| 11 | Ripple Effect | Expanding concentric rings, radius and opacity driven by bass |
+| 12 | Tunnel Vision | Rotating nested rectangles converging to center |
+| 13 | Spiral Galaxy | 200 dots in three rotating spiral arms |
+| 14 | Lightning | Recursive jagged bolts spawned on peaks |
+| 15 | Mandelbrot Zoom | GPU-rendered Mandelbrot set, zoom and iterations driven by audio |
+| 16 | Geometric Dance | Five rotating polygons (triangle→octagon), scale with audio |
+| 17 | Audio Bars 3D | FFT bars rendered in perspective projection |
+| 18 | Kaleidoscope | 8-segment radially mirrored animated pattern |
 
 ## Dependencies
 
-### Debian/Ubuntu:
+### Debian/Ubuntu
 ```bash
-sudo apt install build-essential cmake qt6-base-dev qt6-tools-dev \
-                 libvisual-0.4-dev libpulse-dev libx11-dev \
-                 libxrender-dev pkg-config
-
-# Optional: For projectM support (4,188+ visualization presets)
-sudo apt install libprojectm-dev projectm-data
+sudo apt install cmake qt6-base-dev qt6-declarative-dev \
+                 libkf6coreaddons-dev libkf6i18n-dev \
+                 libkf6package-dev plasma-workspace-dev \
+                 libpulse-dev libfftw3-dev \
+                 pipewire-pulse pulseaudio-utils
 ```
 
-### Fedora/CentOS:
+### Fedora
 ```bash
-sudo dnf install gcc-c++ cmake qt6-qtbase-devel qt6-qttools-devel \
-                 libvisual-devel pulseaudio-libs-devel libX11-devel \
-                 libXrender-devel pkgconfig
+sudo dnf install cmake qt6-qtbase-devel qt6-qtdeclarative-devel \
+                 kf6-kcoreaddons-devel kf6-ki18n-devel \
+                 kf6-kpackage-devel plasma-workspace-devel \
+                 pulseaudio-libs-devel fftw-devel pipewire-pulseaudio
 ```
 
-### Arch Linux:
+### Arch Linux
 ```bash
-sudo pacman -S base-devel cmake qt6-base qt6-tools libvisual \
-               pulseaudio libx11 libxrender pkgconf
+sudo pacman -S cmake qt6-base qt6-declarative \
+               kcoreaddons ki18n kpackage plasma-workspace \
+               libpulse fftw pipewire-pulse
 ```
 
-## Build
+## Build and Install
 
-### Quick dependency installation:
 ```bash
-# Automatic distribution detection and dependency installation
-./install_deps.sh
-```
-
-### Build from source code:
-```bash
-# Clone repository
-git clone <repository-url>
-cd kde-desktop-background-libvisual
-
-# Build using included script
-./build.sh
-
-# Or manually:
+git clone https://github.com/VitexSoftware/kde-desktop-background-libvisual
+cd kde-desktop-background-libvisual/plasma-wallpapers/org.kde.libvisual
 mkdir build && cd build
-cmake .. -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_INSTALL_PREFIX="$HOME/.local"
 make -j"$(nproc)"
+sudo make install
 ```
 
-### Build Debian package:
+Restart Plasma to load the plugin:
 ```bash
-# Instalace build závislostí pro Debian/Ubuntu
+killall plasmashell && plasmashell &
+```
+
+### Build Debian package
+```bash
 sudo apt install debhelper devscripts
-
-# Sestavení .deb balíčku
 ./build_deb.sh
-
-# Instalace balíčku
 sudo dpkg -i ../kde-desktop-background-libvisual_*.deb
-sudo apt install -f  # oprava závislostí pokud potřeba
 ```
 
-### Testování základní funkčnosti:
+## Activating the Wallpaper
+
+1. Right-click the desktop → **Configure Desktop and Wallpaper…**
+2. In the **Wallpaper Type** dropdown select **LibVisual Background**
+3. Click **Apply**
+
+The configuration panel appears below the selector. From there you can:
+- **Input Device** — choose from detected microphone/capture sources (output monitors are excluded)
+- **Sensitivity / Smoothing** — tune the audio reactivity
+- **Visualization Type** — pick from 19 types; the preview updates live
+- **Color Scheme** — global color palette used by most visualizations
+- **Show Status Indicator** — small overlay showing dB level and backend state
+
+## Audio Level Meter
+
+The level meter in the config dialog reads from the real PulseAudio/PipeWire backend. When a device with no microphone connected is selected (e.g. onboard audio without a mic plugged in), the meter shows −60 dB (silence). It updates in real time as you switch devices or plug in a microphone.
+
+## Testing
+
 ```bash
-# Sestavení zjednodušené verze pro testování
-make simple_visualizer
-./simple_visualizer
+# Full build, install, and diagnostic check
+./test.sh
+
+# Config UI and schema validation
+bash test_config.sh
+
+# AudioVisualizer QML module install check
+bash test_qml_module.sh
+
+# System diagnostics (plugin files, symbols, PulseAudio sources)
+./diagnostics.sh
+# or quick mode (skip ldd / journal):
+./diagnostics.sh --quick
 ```
-
-## Usage
-
-### Run application:
-```bash
-./libvisual-bg
-```
-
-### Run with automatic visualization start:
-```bash
-./libvisual-bg --autostart
-```
-
-### Controls:
-1. Application starts minimized in system tray
-2. Double-click tray icon to open control panel
-3. In the control panel you can:
-   - Select audio device
-   - Select visualization plugin
-   - Set automatic switching interval
-   - Start/stop visualization
-
-## Configuration
-
-Settings are automatically saved to `~/.config/libvisual-bg.conf`:
-
-```ini
-[audio]
-device=default
-
-[visual]
-plugin=gforce
-auto_switch_interval=30
-
-[window]
-width=1920
-height=1080
-```
-
-## Available Visualizations
-
-### LibVisual Plugins (13 included)
-
-Application automatically detects installed libvisual plugins:
-- `jess` - Abstract effects
-- `bumpscope` - Oscilloscope/waveform
-- `corona` - Plasma/corona effects
-- `lv_flower` - Flower pattern visualization
-- `infinite` - Infinite fractals
-- `jakdaw` - Spectral analyzer
-- `lv_analyzer` - Audio spectrum analyzer
-- `lv_scope` - Oscilloscope
-- `madspin` - Spinning effects
-- `nastyfft` - FFT-based visualization
-- `oinksie` - Abstract effects
-- And more...
-
-### ProjectM Presets (Optional)
-
-When projectM packages are installed (`libprojectm3` and `projectm-data`),
-you gain access to 4,188+ Milkdrop-compatible visualization presets including:
-- Classic Milkdrop presets from Winamp
-- Tryptonaut collection
-- BLTC201 collection
-- Various artist collections
-
-For more details, see [VISUALIZATIONS.md](VISUALIZATIONS.md).
 
 ## Troubleshooting
 
-### Application won't start:
-1. Check that all dependencies are installed
-2. Verify that libvisual plugins are available:
+### No audio detected / meter stays at −60 dB
+1. Check available input sources:
    ```bash
-   ls /usr/lib/libvisual-0.4/actor/
+   pactl list short sources | grep -v monitor
+   ```
+2. Select the correct device in the wallpaper configuration dialog.
+3. If the list is empty, ensure a capture device is connected and PipeWire/PulseAudio is running:
+   ```bash
+   systemctl --user status pipewire pipewire-pulse
    ```
 
-### No audio is detected:
-1. Check PulseAudio settings:
+### Wallpaper shows a black or blank screen
+1. Verify the plugin was installed correctly:
    ```bash
-   pactl list sources short
+   ./diagnostics.sh --quick
    ```
-2. Select correct audio input in GUI
-3. Ujistěte se, že aplikace má přístup k audio
+2. Check the Plasma journal for QML errors:
+   ```bash
+   journalctl --user -n 100 | grep -i libvisual
+   ```
+3. Restart Plasma:
+   ```bash
+   killall plasmashell && plasmashell &
+   ```
 
-### Vizualizace se nezobrazuje:
-1. Zkontrolujte, zda běží X11 (ne Wayland)
-2. Ověřte oprávnění pro desktop rendering
-3. Zkuste spustit s jinými window manager vlastnostmi
-
-## Vývoj
-
-### Struktura projektu:
+### Mandelbrot Zoom shows blank
+The Mandelbrot visualization requires a compiled GLSL shader (`mandelbrot.frag.qsb`). This is built automatically when Qt6 ShaderTools is available. Check:
+```bash
+ls ~/.local/share/plasma/wallpapers/org.kde.libvisual/contents/shaders/
 ```
-src/
-├── main.cpp           # Hlavní aplikace a event loop
-├── visualizer.cpp/h   # Wrapper pro libvisual API
-├── audio_input.cpp/h  # PulseAudio input handling
-├── desktop_renderer.cpp/h # X11 desktop rendering
-├── settings.cpp/h     # Konfigurace a nastavení
-└── gui.cpp/h         # Qt GUI a systémový tray
+If `mandelbrot.frag.qsb` is missing, install `qt6-shader-baker` and rebuild.
+
+## Project Structure
+
+```
+plasma-wallpapers/org.kde.libvisual/
+├── audiovisualizer.cpp/h   # PulseAudio capture + FFTW spectrum backend (QML element)
+├── plugin.cpp/h            # Plasma wallpaper plugin entry point
+├── CMakeLists.txt          # Build system
+├── metadata.json           # KPackage metadata
+└── contents/
+    ├── config/main.xml     # KConfig schema (all settings with defaults)
+    └── ui/
+        ├── main.qml        # Wallpaper rendering – all 19 visualization types
+        └── config.qml      # Configuration dialog – device picker, level meter, preview
 ```
 
-### Přidání nového audio backendu:
-1. Implementujte rozhraní v `audio_input.h`
-2. Přidejte detekci do `AudioInput::getAvailableDevices()`
-3. Aktualizujte GUI pro výběr backendu
+## License
 
-### Přidání nových rendering možností:
-1. Rozšiřte `DesktopRenderer` pro různé kompozitory
-2. Implementujte Wayland backend
-3. Přidejte podporu pro více monitorů
+GPL-3.0-or-later — see [LICENSE](LICENSE)
 
-## Licence
+## Contributing
 
-[Určete licenci podle vašich požadavků]
-
-## Přispívání
-
-1. Forkněte repozitář
-2. Vytvořte feature branch
-3. Commitněte změny
-4. Pushněte do branch
-5. Vytvořte Pull Request
+1. Fork the repository
+2. Create a feature branch
+3. Run `./test.sh` to verify the build
+4. Open a Pull Request
