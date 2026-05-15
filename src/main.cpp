@@ -3,22 +3,29 @@
 #include <QThread>
 
 #include "settings.h"
-#include "visualizer.h"
+#include "visualization_engine.h"
+#include "visualization_factory.h"
 #include "audio_input.h"
 #include "desktop_renderer.h"
 #include "gui.h"
 
+#ifdef HAVE_PROJECTM
+#include "projectm_visualizer.h"
+#endif
+
 #include <iostream>
 #include <memory>
 #include <csignal>
+#include <libvisual/libvisual.h>
 
 class VisualizationApp : public QObject {
     Q_OBJECT
 
 public:
-    VisualizationApp(QObject* parent = nullptr) : QObject(parent), m_running(false) {
+    VisualizationApp(VisualizationFactory::EngineType engineType = VisualizationFactory::EngineType::AUTO, 
+                     QObject* parent = nullptr) 
+        : QObject(parent), m_running(false), m_engineType(engineType) {
         m_settings = std::make_unique<Settings>();
-        m_visualizer = std::make_unique<Visualizer>();
         m_audioInput = std::make_unique<AudioInput>();
         m_renderer = std::make_unique<DesktopRenderer>();
         
@@ -36,6 +43,14 @@ public:
     }
 
     bool initialize() {
+        // Create visualizer now (after libvisual_init in main)
+        m_visualizer = VisualizationFactory::createEngine(m_engineType);
+        if (!m_visualizer) {
+            std::cerr << "Failed to create visualization engine" << std::endl;
+            return false;
+        }
+        std::cout << "Using " << m_visualizer->getEngineName() << " visualization engine" << std::endl;
+        
         // Get screen size
         int screenWidth, screenHeight;
         if (!m_renderer->initialize()) {
@@ -45,6 +60,19 @@ public:
         
         m_renderer->getScreenSize(screenWidth, screenHeight);
         m_settings->setWindowSize(screenWidth, screenHeight);
+
+        // For projectM: hand it our GLX context so it can render directly into
+        // the desktop window without a GPU→CPU readback round-trip.
+#ifdef HAVE_PROJECTM
+        if (m_renderer->hasGLContext()) {
+            auto* pmViz = dynamic_cast<ProjectMVisualizer*>(m_visualizer.get());
+            if (pmViz) {
+                pmViz->setGLContext(m_renderer->getDisplay(),
+                                    m_renderer->getWindow(),
+                                    m_renderer->getGLContext());
+            }
+        }
+#endif
 
         // Initialize visualizer
         if (!m_visualizer->initialize(screenWidth, screenHeight)) {
@@ -102,6 +130,12 @@ public:
         // Update GUI with available options
         m_controlPanel->updatePluginList(m_availablePlugins);
         m_controlPanel->updateAudioDeviceList(m_audioInput->getAvailableDevices());
+        
+        // Update engine info
+        if (m_visualizer) {
+            QString engineName = QString::fromStdString(m_visualizer->getEngineName());
+            m_controlPanel->updateEngineInfo(engineName);
+        }
         
         // Connect signals
         connect(m_controlPanel.get(), &ControlPanel::startVisualization,
@@ -180,12 +214,19 @@ private slots:
     void renderFrame() {
         if (!m_running) return;
 
-        if (m_visualizer->render()) {
-            unsigned char* videoData = m_visualizer->getVideoData();
-            if (videoData) {
-                m_renderer->renderFrame(videoData, 
-                                      m_visualizer->getWidth(), 
-                                      m_visualizer->getHeight());
+        if (m_visualizer->usesDirectGL()) {
+            // Engine renders directly into the window's GL back-buffer;
+            // just present the frame — no CPU pixel transfer needed.
+            m_visualizer->render();
+            m_renderer->swapBuffers();
+        } else {
+            if (m_visualizer->render()) {
+                unsigned char* videoData = m_visualizer->getVideoData();
+                if (videoData) {
+                    m_renderer->renderFrame(videoData,
+                                            m_visualizer->getWidth(),
+                                            m_visualizer->getHeight());
+                }
             }
         }
     }
@@ -204,7 +245,7 @@ private slots:
 
 private:
     std::unique_ptr<Settings> m_settings;
-    std::unique_ptr<Visualizer> m_visualizer;
+    std::unique_ptr<VisualizationEngine> m_visualizer;
     std::unique_ptr<AudioInput> m_audioInput;
     std::unique_ptr<DesktopRenderer> m_renderer;
     std::unique_ptr<ControlPanel> m_controlPanel;
@@ -215,6 +256,7 @@ private:
     std::vector<std::string> m_availablePlugins;
     size_t m_currentPluginIndex;
     bool m_running;
+    VisualizationFactory::EngineType m_engineType;
 };
 
 // Signal handler for clean shutdown
@@ -230,7 +272,7 @@ void signalHandler(int signal) {
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
     app.setApplicationName("LibVisual Background");
-    app.setApplicationVersion("1.0");
+    app.setApplicationVersion("1.1.0");
     app.setQuitOnLastWindowClosed(false); // Keep running in system tray
 
     // Initialize libvisual first
@@ -243,7 +285,33 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
-    VisualizationApp vizApp;
+    // Parse command-line arguments
+    VisualizationFactory::EngineType engineType = VisualizationFactory::EngineType::AUTO;
+    bool autoStart = false;
+    
+    for (int i = 1; i < argc; ++i) {
+        if (strcmp(argv[i], "--autostart") == 0) {
+            autoStart = true;
+        } else if (strcmp(argv[i], "--engine") == 0 && i + 1 < argc) {
+            engineType = VisualizationFactory::stringToEngineType(argv[i + 1]);
+            ++i;  // Skip next argument
+        } else if (strcmp(argv[i], "--help") == 0 || strcmp(argv[i], "-h") == 0) {
+            std::cout << "LibVisual Desktop Background Visualization\n";
+            std::cout << "Usage: libvisual-bg [OPTIONS]\n";
+            std::cout << "\nOptions:\n";
+            std::cout << "  --autostart            Start visualization automatically\n";
+            std::cout << "  --engine <type>        Visualization engine (auto, libvisual, projectm)\n";
+            std::cout << "  --help, -h             Show this help message\n";
+            std::cout << "\nAvailable engines: ";
+            for (const auto& engine : VisualizationFactory::getAvailableEngines()) {
+                std::cout << engine << " ";
+            }
+            std::cout << std::endl;
+            return 0;
+        }
+    }
+
+    VisualizationApp vizApp(engineType);
     g_app = &vizApp;
 
     if (!vizApp.initialize()) {
@@ -252,15 +320,6 @@ int main(int argc, char* argv[]) {
     }
 
     vizApp.createGUI();
-
-    // Auto-start visualization if requested
-    bool autoStart = false;
-    for (int i = 1; i < argc; ++i) {
-        if (strcmp(argv[i], "--autostart") == 0) {
-            autoStart = true;
-            break;
-        }
-    }
 
     if (autoStart) {
         QTimer::singleShot(1000, &vizApp, &VisualizationApp::startVisualization);

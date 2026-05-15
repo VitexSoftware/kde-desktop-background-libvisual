@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-import QtQuick 2.15
-import QtQuick.Controls 2.15
-import org.kde.plasma.core 2.0 as PlasmaCore
-import org.kde.plasma.plasmoid 2.0
+import QtQuick
+import QtQuick.Controls
+import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasmoid
 import AudioVisualizer 1.0
 
 WallpaperItem {
@@ -17,11 +17,13 @@ WallpaperItem {
     property real audioSensitivity: root.configuration.audioSensitivity  
     property bool showInfo: root.configuration.showInfo
     property string audioSource: root.configuration.audioSource
+    property int colorScheme: root.configuration.colorScheme
+    property bool showStatusIndicator: root.configuration.showStatusIndicator
     property real t: 0
     
     // Audio backend configuration
     property bool useRealAudio: true   // Enable real audio by default now that module works
-    property bool debugAudio: false   // Disable ALL debug logging to reduce console spam
+    property bool debugAudio: true   // Enable debug logging temporarily
     
     // Real audio backend instance
     AudioVisualizer {
@@ -29,10 +31,10 @@ WallpaperItem {
         
         Component.onCompleted: {
             if (debugAudio) {
-                // console.log("AudioVisualizer - Audio backend initialized successfully!")
-                // console.log("AudioVisualizer - Device count:", deviceCount)
-                // console.log("AudioVisualizer - Initial running state:", running)
-                // console.log("AudioVisualizer - Unified module loaded successfully!")
+                console.log("AudioVisualizer - Audio backend initialized successfully!")
+                console.log("AudioVisualizer - Device count:", deviceCount)
+                console.log("AudioVisualizer - Initial running state:", running)
+                console.log("AudioVisualizer - Unified module loaded successfully!")
             }
             // Start audio processing
             start()
@@ -179,6 +181,54 @@ WallpaperItem {
     property real bassLevel: 0.1
     property real midLevel: 0.1
     property real trebleLevel: 0.1
+    
+    // Color scheme functions
+    // 0: Rainbow Spectrum, 1: Blue Gradient, 2: Fire, 3: Plasma, 4: Monochrome
+    function getColorForValue(value, intensity) {
+        switch(colorScheme) {
+            case 0: // Rainbow Spectrum
+                var hue = value * 360
+                var sat = 0.8 + intensity * 0.2
+                var val = 0.5 + intensity * 0.5
+                return Qt.hsva(hue, sat, val, 0.9)
+            case 1: // Blue Gradient
+                return Qt.rgba(0.1 + intensity * 0.3, 0.3 + intensity * 0.5, 0.5 + intensity * 0.5, 0.9)
+            case 2: // Fire
+                return Qt.rgba(0.8 + intensity * 0.2, 0.3 * intensity, 0.1 * intensity, 0.9)
+            case 3: // Plasma
+                return Qt.rgba(0.5 + intensity * 0.5, 0.2 * intensity, 0.5 + intensity * 0.5, 0.9)
+            case 4: // Monochrome
+                var gray = 0.3 + intensity * 0.7
+                return Qt.rgba(gray, gray, gray, 0.9)
+            default:
+                return Qt.rgba(0.5, 0.5, 0.5, 0.9)
+        }
+    }
+    
+    function getBackgroundColor(position, isTop) {
+        var t = root.t * 0.2
+        var base = isTop ? 0.25 : 0.05
+        var mod = isTop ? Math.sin(t) : Math.cos(t)
+        
+        switch(colorScheme) {
+            case 0: // Rainbow Spectrum
+                return isTop ? Qt.rgba(0.5 + 0.25*mod, 0.25 + 0.25*mod, 0.5, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.05, 0.15, 1)
+            case 1: // Blue Gradient
+                return Qt.rgba(0.0, base + 0.25*mod, 0.5 + (isTop ? 0.25*mod : 0), 1)
+            case 2: // Fire
+                return isTop ? Qt.rgba(0.5 + 0.25*mod, base + 0.25*mod, 0.0, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.05, 0.0, 1)
+            case 3: // Plasma
+                return isTop ? Qt.rgba(0.5, 0.0, base + 0.25*mod, 1) :
+                              Qt.rgba(0.15 + 0.15*mod, 0.0, 0.05, 1)
+            case 4: // Monochrome
+                var gray = base + 0.15*mod
+                return Qt.rgba(gray, gray, gray, 1)
+            default:
+                return Qt.rgba(base, base, base, 1)
+        }
+    }
 
     // Background gradient shifting subtly
     Rectangle {
@@ -186,17 +236,11 @@ WallpaperItem {
         gradient: Gradient {
             GradientStop { 
                 position: 0.0; 
-                color: visualizationType === 0 ? Qt.rgba(0.0, 0.25 + 0.25*Math.sin(root.t*0.2), 0.5, 1) :
-                       visualizationType === 1 ? Qt.rgba(0.5, 0.25 + 0.25*Math.sin(root.t*0.2), 0.0, 1) :
-                       visualizationType === 2 ? Qt.rgba(0.25 + 0.25*Math.sin(root.t*0.2), 0.0, 0.5, 1) :
-                       Qt.rgba(0.5, 0.0, 0.25 + 0.25*Math.sin(root.t*0.2), 1)
+                color: getBackgroundColor(0.0, true)
             }
             GradientStop { 
                 position: 1.0; 
-                color: visualizationType === 0 ? Qt.rgba(0.0, 0.05, 0.15 + 0.15*Math.cos(root.t*0.2), 1) :
-                       visualizationType === 1 ? Qt.rgba(0.15 + 0.15*Math.cos(root.t*0.2), 0.05, 0.0, 1) :
-                       visualizationType === 2 ? Qt.rgba(0.05, 0.0, 0.15 + 0.15*Math.cos(root.t*0.2), 1) :
-                       Qt.rgba(0.15 + 0.15*Math.cos(root.t*0.2), 0.0, 0.05, 1)
+                color: getBackgroundColor(1.0, false)
             }
         }
     }
@@ -230,12 +274,7 @@ WallpaperItem {
             radius: 2
             
             // Enhanced reactive coloring with guaranteed visibility
-            color: Qt.rgba(
-                Math.max(0.4, 0.2 + 0.6 * Math.min(mag, 1.0)), 
-                Math.max(0.3, 0.3 + 0.5 * root.audioPeak), 
-                Math.max(0.5, 0.6 + 0.4 * freqMultiplier), 
-                0.95 // High opacity for visibility
-            )
+            color: getColorForValue(index / 64.0, Math.min(mag, 1.0))
             
             // Pulse effect for high peaks
             scale: mag > 0.7 ? (1.0 + 0.2 * Math.sin(root.t * 15)) : 1.0
@@ -330,7 +369,8 @@ WallpaperItem {
                 var ctx = getContext("2d")
                 ctx.clearRect(0, 0, width, height)
                 
-                ctx.strokeStyle = Qt.rgba(0.3 + 0.5 * root.audioPeak, 0.7, 0.9, 0.8)
+                var primaryColor = getColorForValue(0.5, 0.7 + 0.3 * root.audioPeak)
+                ctx.strokeStyle = primaryColor
                 ctx.lineWidth = 2 + root.audioPeak * 4
                 ctx.beginPath()
                 
@@ -359,7 +399,8 @@ WallpaperItem {
                 ctx.stroke()
                 
                 // Secondary harmonic wave
-                ctx.strokeStyle = Qt.rgba(0.9, 0.4 + 0.4 * root.midLevel, 0.6, 0.5)
+                var secondaryColor = getColorForValue(0.7, 0.5 + 0.3 * root.midLevel)
+                ctx.strokeStyle = secondaryColor
                 ctx.lineWidth = 1 + root.midLevel * 3
                 ctx.beginPath()
                 for (var i = 0; i < steps; i++) {
@@ -520,6 +561,86 @@ WallpaperItem {
         }
     }
 
+    // Mandelbrot Zoom visualization (type 15) — GPU-accelerated via ShaderEffect.
+    // Every pixel is iterated in parallel on the GPU; this is typically 10–100×
+    // faster than the previous Canvas-based CPU fallback at full wallpaper resolution.
+    //
+    // The compiled shader (mandelbrot.frag.qsb) is embedded in the wallpaper plugin
+    // binary via qt6_add_shaders (or installed to the shaders/ dir by the manual
+    // qsb fallback). When the QSB is unavailable the ShaderEffect renders transparent.
+    ShaderEffect {
+        anchors.fill: parent
+        visible: visualizationType === 15
+
+        // Each property maps directly to a uniform in the GLSL buf block.
+        // Qt6 ShaderEffect updates them every frame via the binding engine.
+        property real time:             root.t
+        property real audioPeak:        root.audioPeak
+        property real audioSensitivity: root.audioSensitivity
+        property real centerX:          -0.5 + Math.sin(root.t * 0.3) * 0.3 * root.audioSensitivity
+        property real centerY:           0.0 + Math.cos(root.t * 0.2) * 0.3 * root.audioSensitivity
+        property int  colorScheme:      root.colorScheme
+        property int  maxIter:          50 + Math.floor(root.audioPeak * 50)
+
+        // Compiled shader embedded in the wallpaper plugin binary at build time
+        // via qt6_add_shaders (or qt_add_resources + manual qsb) — prefix "/shaders".
+        // If the QSB is absent (build without ShaderTools) the effect renders blank.
+        fragmentShader: "qrc:/shaders/mandelbrot.frag.qsb"
+    }
+    
+    // Fallback for unimplemented visualizations (types 4-14, 16-18)
+    Rectangle {
+        anchors.fill: parent
+        visible: visualizationType >= 4 && visualizationType <= 18 && visualizationType !== 15
+        color: Qt.rgba(0.05, 0.05, 0.1, 0.95)
+        
+        Column {
+            anchors.centerIn: parent
+            spacing: 20
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "🎵"
+                font.pixelSize: 72
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Visualization Not Yet Implemented"
+                font.pixelSize: 24
+                font.bold: true
+                color: Qt.rgba(0.7, 0.7, 0.8, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Type: " + visualizationType
+                font.pixelSize: 16
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: "Available: Spectrum (0), Waveform (1), Oscilloscope (2),\nFractal (3), Mandelbrot (15)"
+                font.pixelSize: 14
+                color: Qt.rgba(0.5, 0.5, 0.6, 1)
+                horizontalAlignment: Text.AlignHCenter
+            }
+        }
+        
+        // Animated audio-reactive pulse
+        Rectangle {
+            anchors.centerIn: parent
+            width: 200 + root.audioPeak * 100
+            height: width
+            radius: width / 2
+            color: "transparent"
+            border.color: Qt.rgba(0.4, 0.4, 0.5, 0.3 * root.audioPeak)
+            border.width: 2
+        }
+    }
+
     // Information overlay
     Rectangle {
         id: info
@@ -563,11 +684,13 @@ WallpaperItem {
                 wrapMode: Text.Wrap
                 width: parent.width
             }
-            Text { 
-                text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" : 
+            Text {
+                text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" :
                               root.visualizationType === 1 ? "Waveform" :
-                              root.visualizationType === 2 ? "Oscilloscope" : "Fractal")
-                color: "white" 
+                              root.visualizationType === 2 ? "Oscilloscope" :
+                              root.visualizationType === 3 ? "Fractal" :
+                              root.visualizationType === 15 ? "Mandelbrot (GPU)" : "Other")
+                color: root.visualizationType === 15 ? "#00ccff" : "white"
                 font.pointSize: 9
                 wrapMode: Text.Wrap
                 width: parent.width
@@ -582,10 +705,46 @@ WallpaperItem {
         }
     }
 
+    // Status indicator (small corner indicator)
+    Rectangle {
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: 10
+        width: 100
+        height: 50
+        color: Qt.rgba(0, 0, 0, 0.7)
+        radius: 6
+        border.color: root.useRealAudio && audioBackend && audioBackend.running ? "#00ff00" : "#ff9900"
+        border.width: 2
+        visible: root.showStatusIndicator
+        
+        Column {
+            anchors.centerIn: parent
+            spacing: 2
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: root.useRealAudio && audioBackend && audioBackend.running ? "●" : "○"
+                color: root.useRealAudio && audioBackend && audioBackend.running ? "#00ff00" : "#ff9900"
+                font.pixelSize: 16
+                font.bold: true
+            }
+            
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: root.useRealAudio && audioBackend && audioBackend.running ? 
+                      audioBackend.decibels.toFixed(0) + "dB" : "SIM"
+                color: "white"
+                font.pixelSize: 10
+                font.family: "monospace"
+            }
+        }
+    }
+
     Component.onCompleted: {
         if (debugAudio) {
-            // console.log("LibVisual Background WallpaperItem loaded")
-            // console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
+            console.log("LibVisual Background WallpaperItem loaded")
+            console.log("Configuration - Type:", visualizationType, "Sensitivity:", audioSensitivity, "ShowInfo:", showInfo, "Source:", audioSource)
         }
     }
 }

@@ -27,6 +27,7 @@ public:
 
     void updatePluginList(const std::vector<std::string>& plugins);
     void updateAudioDeviceList(const std::vector<std::string>& devices);
+    void updateEngineInfo(const QString& engineName);
 
 signals:
     void audioDeviceChanged(const QString& device);
@@ -59,6 +60,7 @@ private:
     QSpinBox* m_autoSwitchSpin;
     QPushButton* m_startButton;
     QPushButton* m_stopButton;
+    QLabel* m_versionLabel;
     
     // System tray
     QSystemTrayIcon* m_trayIcon;
