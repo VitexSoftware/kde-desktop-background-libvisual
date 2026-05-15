@@ -36,6 +36,7 @@ if(CMAKE_LIBRARY_ARCHITECTURE)
 endif()
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
+find_package(Qt6 OPTIONAL_COMPONENTS ShaderTools)
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
     pkg_check_modules(PULSEAUDIO libpulse-simple libpulse)
@@ -129,6 +130,60 @@ install(DIRECTORY contents/ DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers
 install(FILES metadata.json DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers/org.kde.libvisual/)
 
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
+
+# --- Mandelbrot GPU shader ---------------------------------------------------
+# Compile the GLSL 4.40 fragment shader to a Qt Shader Binary (.qsb) so that
+# the QML ShaderEffect can run it on the GPU instead of the Canvas CPU fallback.
+# Requires Qt6::ShaderTools (qsb tool); silently skipped when not available.
+if(Qt6ShaderTools_FOUND)
+    qt6_add_shaders(plasma_wallpaper_org.kde.libvisual "mandelbrot_shader"
+        BATCHABLE
+        PRECOMPILE
+        OPTIMIZED
+        PREFIX "/shaders"
+        FILES "contents/shaders/mandelbrot.frag"
+    )
+    message(STATUS "Mandelbrot GPU shader will be compiled (Qt6::ShaderTools found)")
+else()
+    # Fallback: find the qsb binary manually and use add_custom_command
+    find_program(QSB_TOOL qsb
+        HINTS "${Qt6_DIR}/../../../bin"
+              "${Qt6Core_DIR}/../../../bin"
+        DOC "Qt Shader Baker (qsb) tool")
+
+    if(QSB_TOOL)
+        set(MANDELBROT_QSB "${CMAKE_CURRENT_BINARY_DIR}/mandelbrot.frag.qsb")
+        add_custom_command(
+            OUTPUT  "${MANDELBROT_QSB}"
+            COMMAND "${QSB_TOOL}"
+                    --glsl "100es,120,150"
+                    --hlsl 50
+                    --msl 12
+                    -o "${MANDELBROT_QSB}"
+                    "${CMAKE_CURRENT_SOURCE_DIR}/contents/shaders/mandelbrot.frag"
+            DEPENDS "contents/shaders/mandelbrot.frag"
+            COMMENT "Compiling Mandelbrot fragment shader to QSB"
+            VERBATIM
+        )
+        # Mark the generated file so CMake knows it won't exist at configure time
+        set_property(SOURCE "${MANDELBROT_QSB}" PROPERTY GENERATED TRUE)
+
+        # Embed into the plugin binary under qrc:/shaders/ — same path as the
+        # qt6_add_shaders route so the QML shader URL is identical in both cases.
+        qt_add_resources(plasma_wallpaper_org.kde.libvisual "mandelbrot_shader_res"
+            PREFIX "/shaders"
+            BASE   "${CMAKE_CURRENT_BINARY_DIR}"
+            FILES  "${MANDELBROT_QSB}"
+        )
+        # Ensure the QSB is compiled before it is packaged into the QRC
+        add_custom_target(mandelbrot_qsb_target DEPENDS "${MANDELBROT_QSB}")
+        add_dependencies(plasma_wallpaper_org.kde.libvisual mandelbrot_qsb_target)
+
+        message(STATUS "Mandelbrot GPU shader will be compiled via qsb at ${QSB_TOOL}")
+    else()
+        message(WARNING "qsb tool not found — Mandelbrot ShaderEffect will render blank (Canvas path removed)")
+    endif()
+endif()
 
 # Duplicate plugin library into multi-arch plugin dir if different
 if(MULTIARCH_PLUGINDIR AND NOT MULTIARCH_PLUGINDIR STREQUAL KDE_INSTALL_PLUGINDIR)

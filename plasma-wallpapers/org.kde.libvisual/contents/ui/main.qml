@@ -561,54 +561,31 @@ WallpaperItem {
         }
     }
 
-    // Mandelbrot Zoom visualization (type 15)
-    Canvas {
+    // Mandelbrot Zoom visualization (type 15) — GPU-accelerated via ShaderEffect.
+    // Every pixel is iterated in parallel on the GPU; this is typically 10–100×
+    // faster than the previous Canvas-based CPU fallback at full wallpaper resolution.
+    //
+    // The compiled shader (mandelbrot.frag.qsb) is embedded in the wallpaper plugin
+    // binary via qt6_add_shaders (or installed to the shaders/ dir by the manual
+    // qsb fallback). When the QSB is unavailable the ShaderEffect renders transparent.
+    ShaderEffect {
         anchors.fill: parent
         visible: visualizationType === 15
-        
-        property real zoom: 0.5 + root.audioPeak * 2.0
-        property real centerX: -0.5 + Math.sin(root.t * 0.3) * 0.3 * root.audioSensitivity
-        property real centerY: 0.0 + Math.cos(root.t * 0.2) * 0.3 * root.audioSensitivity
-        
-        onPaint: {
-            var ctx = getContext("2d")
-            ctx.clearRect(0, 0, width, height)
-            
-            var maxIter = 50 + Math.floor(root.audioPeak * 50)
-            var zoomLevel = Math.pow(0.95, root.t * 10 + root.audioPeak * 20)
-            
-            for (var px = 0; px < width; px += 2) {
-                for (var py = 0; py < height; py += 2) {
-                    var x0 = (px / width - 0.5) * 3.5 * zoomLevel + centerX
-                    var y0 = (py / height - 0.5) * 2.0 * zoomLevel + centerY
-                    
-                    var x = 0.0
-                    var y = 0.0
-                    var iteration = 0
-                    
-                    while (x*x + y*y <= 4.0 && iteration < maxIter) {
-                        var xtemp = x*x - y*y + x0
-                        y = 2*x*y + y0
-                        x = xtemp
-                        iteration++
-                    }
-                    
-                    if (iteration < maxIter) {
-                        var ratio = iteration / maxIter
-                        var color = getColorForValue(ratio, 0.8 + root.audioPeak * 0.2)
-                        ctx.fillStyle = color
-                        ctx.fillRect(px, py, 2, 2)
-                    }
-                }
-            }
-        }
-        
-        Timer {
-            interval: 100
-            running: parent.visible
-            repeat: true
-            onTriggered: parent.requestPaint()
-        }
+
+        // Each property maps directly to a uniform in the GLSL buf block.
+        // Qt6 ShaderEffect updates them every frame via the binding engine.
+        property real time:             root.t
+        property real audioPeak:        root.audioPeak
+        property real audioSensitivity: root.audioSensitivity
+        property real centerX:          -0.5 + Math.sin(root.t * 0.3) * 0.3 * root.audioSensitivity
+        property real centerY:           0.0 + Math.cos(root.t * 0.2) * 0.3 * root.audioSensitivity
+        property int  colorScheme:      root.colorScheme
+        property int  maxIter:          50 + Math.floor(root.audioPeak * 50)
+
+        // Compiled shader embedded in the wallpaper plugin binary at build time
+        // via qt6_add_shaders (or qt_add_resources + manual qsb) — prefix "/shaders".
+        // If the QSB is absent (build without ShaderTools) the effect renders blank.
+        fragmentShader: "qrc:/shaders/mandelbrot.frag.qsb"
     }
     
     // Fallback for unimplemented visualizations (types 4-14, 16-18)
@@ -707,11 +684,13 @@ WallpaperItem {
                 wrapMode: Text.Wrap
                 width: parent.width
             }
-            Text { 
-                text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" : 
+            Text {
+                text: "Mode: " + (root.visualizationType === 0 ? "Spectrum" :
                               root.visualizationType === 1 ? "Waveform" :
-                              root.visualizationType === 2 ? "Oscilloscope" : "Fractal")
-                color: "white" 
+                              root.visualizationType === 2 ? "Oscilloscope" :
+                              root.visualizationType === 3 ? "Fractal" :
+                              root.visualizationType === 15 ? "Mandelbrot (GPU)" : "Other")
+                color: root.visualizationType === 15 ? "#00ccff" : "white"
                 font.pointSize: 9
                 wrapMode: Text.Wrap
                 width: parent.width

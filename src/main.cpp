@@ -9,6 +9,10 @@
 #include "desktop_renderer.h"
 #include "gui.h"
 
+#ifdef HAVE_PROJECTM
+#include "projectm_visualizer.h"
+#endif
+
 #include <iostream>
 #include <memory>
 #include <csignal>
@@ -56,6 +60,19 @@ public:
         
         m_renderer->getScreenSize(screenWidth, screenHeight);
         m_settings->setWindowSize(screenWidth, screenHeight);
+
+        // For projectM: hand it our GLX context so it can render directly into
+        // the desktop window without a GPU→CPU readback round-trip.
+#ifdef HAVE_PROJECTM
+        if (m_renderer->hasGLContext()) {
+            auto* pmViz = dynamic_cast<ProjectMVisualizer*>(m_visualizer.get());
+            if (pmViz) {
+                pmViz->setGLContext(m_renderer->getDisplay(),
+                                    m_renderer->getWindow(),
+                                    m_renderer->getGLContext());
+            }
+        }
+#endif
 
         // Initialize visualizer
         if (!m_visualizer->initialize(screenWidth, screenHeight)) {
@@ -197,12 +214,19 @@ private slots:
     void renderFrame() {
         if (!m_running) return;
 
-        if (m_visualizer->render()) {
-            unsigned char* videoData = m_visualizer->getVideoData();
-            if (videoData) {
-                m_renderer->renderFrame(videoData, 
-                                      m_visualizer->getWidth(), 
-                                      m_visualizer->getHeight());
+        if (m_visualizer->usesDirectGL()) {
+            // Engine renders directly into the window's GL back-buffer;
+            // just present the frame — no CPU pixel transfer needed.
+            m_visualizer->render();
+            m_renderer->swapBuffers();
+        } else {
+            if (m_visualizer->render()) {
+                unsigned char* videoData = m_visualizer->getVideoData();
+                if (videoData) {
+                    m_renderer->renderFrame(videoData,
+                                            m_visualizer->getWidth(),
+                                            m_visualizer->getHeight());
+                }
             }
         }
     }

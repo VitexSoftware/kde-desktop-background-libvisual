@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # Find required packages
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets DBus)
+find_package(Qt6 REQUIRED COMPONENTS Core Widgets DBus OpenGL)
 find_package(PkgConfig REQUIRED)
 
 # Enable Qt6 features
@@ -19,8 +19,8 @@ pkg_check_modules(LIBVISUAL REQUIRED libvisual-0.4)
 # Find X11 libraries
 find_package(X11 REQUIRED)
 
-# Find OpenGL (required for projectM)
-find_package(OpenGL REQUIRED)
+# Find OpenGL + GLX (required for hardware-accelerated desktop rendering)
+find_package(OpenGL REQUIRED COMPONENTS OpenGL)
 
 # Find PulseAudio
 pkg_check_modules(PULSEAUDIO REQUIRED libpulse-simple libpulse)
@@ -77,9 +77,11 @@ target_link_libraries(libvisual-bg
     Qt6::Core
     Qt6::Widgets
     Qt6::DBus
+    Qt6::OpenGL
     ${LIBVISUAL_LIBRARIES}
     ${X11_LIBRARIES}
     ${PULSEAUDIO_LIBRARIES}
+    OpenGL::GL
     ${OPENGL_LIBRARIES}
     pthread
 )
