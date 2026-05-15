@@ -1,3 +1,19 @@
+kde-desktop-background-libvisual (1.1.6-1) unstable; urgency=medium
+
+  * Replace blocking pa_simple + QTimer with async pa_threaded_mainloop /
+    pa_stream callback pipeline; no more QTimer-driven audio polling
+  * Replace pactl subprocess device enumeration with native
+    pa_context_get_source_info_list(); monitor sources filtered via
+    monitor_of_sink field — works transparently under PipeWire
+  * Drop libpulse-simple linkage (pa_simple API no longer used)
+  * Add SVG stock icon installed to hicolor/scalable/apps with component ID
+    as filename; wire into AppStream metainfo and wallpaper metadata.json
+  * Update documentation: PipeWire compat section, async backend architecture
+    reference, debian/README.Debian notes on pipewire-pulse
+  * Fix diagnostics.sh PROJECT_ROOT derivation for bare-filename invocation
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Thu, 15 May 2026 23:59:00 +0200
+
 kde-desktop-background-libvisual (1.1.5-1) unstable; urgency=medium
 
   * Implement all 19 visualization types (Circular Spectrum, Plasma, Starfield,
