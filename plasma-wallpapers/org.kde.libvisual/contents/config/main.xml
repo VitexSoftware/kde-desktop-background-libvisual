@@ -50,5 +50,25 @@
       <label>Audio smoothing factor</label>
       <default>0.8</default>
     </entry>
+
+    <entry name="projectMPresetPath" type="String">
+      <label>Path to projectM presets directory</label>
+      <default>/usr/share/projectM/presets</default>
+    </entry>
+
+    <entry name="projectMShuffle" type="Bool">
+      <label>Auto-shuffle projectM presets</label>
+      <default>true</default>
+    </entry>
+
+    <entry name="projectMDuration" type="Int">
+      <label>Seconds per projectM preset</label>
+      <default>30</default>
+    </entry>
+
+    <entry name="projectMPreset" type="Int">
+      <label>Selected projectM preset index (-1 = shuffle)</label>
+      <default>-1</default>
+    </entry>
   </group>
 </kcfg>

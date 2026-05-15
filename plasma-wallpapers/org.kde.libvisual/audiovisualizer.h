@@ -56,6 +56,7 @@ public:
     Q_INVOKABLE void         stop();
     Q_INVOKABLE QStringList  getAudioSources();
     Q_INVOKABLE QVariantList getInputSources();
+    Q_INVOKABLE QStringList  scanProjectMPresets(const QString &path) const;
 
 signals:
     void decibelsChanged();

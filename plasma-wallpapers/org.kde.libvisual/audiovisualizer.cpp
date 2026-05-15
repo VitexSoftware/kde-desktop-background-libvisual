@@ -5,6 +5,7 @@
 
 #include "audiovisualizer.h"
 #include <QDebug>
+#include <QDir>
 #include <QMutexLocker>
 #include <cmath>
 #include <algorithm>
@@ -148,6 +149,12 @@ void AudioVisualizer::setSensitivity(qreal sensitivity)
 QStringList AudioVisualizer::getAudioSources()
 {
     return {QStringLiteral("default")};
+}
+
+QStringList AudioVisualizer::scanProjectMPresets(const QString &path) const
+{
+    return QDir(path).entryList({QStringLiteral("*.milk"), QStringLiteral("*.prjm")},
+                                QDir::Files, QDir::Name);
 }
 
 // ---------------------------------------------------------------------------

@@ -43,6 +43,7 @@ if(PkgConfig_FOUND)
     # libpulse-simple is no longer used (replaced by pa_stream callbacks)
     pkg_check_modules(PULSEAUDIO REQUIRED libpulse)
     pkg_check_modules(FFTW3 REQUIRED fftw3)
+    pkg_check_modules(PROJECTM libprojectM)
 endif()
 
 find_package(KF6 REQUIRED COMPONENTS CoreAddons I18n Package Config)
@@ -64,8 +65,22 @@ qt_add_qml_module(audiovisualizer_probe
     OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer
 )
 
-target_link_libraries(audiovisualizer_probe PRIVATE ${PULSEAUDIO_LIBRARIES} ${FFTW3_LIBRARIES})
+target_link_libraries(audiovisualizer_probe PRIVATE Qt6::Quick ${PULSEAUDIO_LIBRARIES} ${FFTW3_LIBRARIES})
 target_include_directories(audiovisualizer_probe PRIVATE ${PULSEAUDIO_INCLUDE_DIRS} ${FFTW3_INCLUDE_DIRS})
+
+if(PROJECTM_FOUND)
+    target_sources(audiovisualizer_probe PRIVATE projectmitem.cpp projectmitem.h)
+    target_link_libraries(audiovisualizer_probe PRIVATE ${PROJECTM_LIBRARIES})
+    target_include_directories(audiovisualizer_probe PRIVATE ${PROJECTM_INCLUDE_DIRS})
+    target_compile_definitions(audiovisualizer_probe PRIVATE HAVE_PROJECTM)
+    # projectM constructor can throw; re-enable exceptions for this file only
+    # (KDECompilerSettings adds -fno-exceptions globally)
+    set_source_files_properties(projectmitem.cpp PROPERTIES COMPILE_OPTIONS "-fexceptions")
+    message(STATUS "ProjectM support enabled — ${PROJECTM_VERSION}")
+else()
+    message(STATUS "libprojectM not found — type 19 will show black screen")
+    target_sources(audiovisualizer_probe PRIVATE projectmitem.cpp projectmitem.h)
+endif()
 
 # Set up RPATH for the plugin to find system libraries
 set_target_properties(audiovisualizer_probe PROPERTIES

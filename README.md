@@ -8,7 +8,7 @@ Audio-reactive wallpaper plugin for KDE Plasma 6. Renders real-time visualizatio
 
 ## Features
 
-- 19 built-in visualization types, all audio-reactive
+- 20 built-in visualization types, all audio-reactive
 - GPU-accelerated Mandelbrot zoom via GLSL shader (NVIDIA/AMD/Intel)
 - Real-time FFT spectrum analysis using FFTW3
 - PulseAudio/PipeWire integration — reads from any capture source
@@ -40,6 +40,20 @@ Audio-reactive wallpaper plugin for KDE Plasma 6. Renders real-time visualizatio
 | 16 | Geometric Dance | Five rotating polygons (triangle→octagon), scale with audio |
 | 17 | Audio Bars 3D | FFT bars rendered in perspective projection |
 | 18 | Kaleidoscope | 8-segment radially mirrored animated pattern |
+| 19 | ProjectM Visualizer | Milkdrop-compatible GPU presets via libprojectM (4 000+ presets) |
+
+## ProjectM Visualization
+
+Type 19 renders Milkdrop-compatible GPU presets via [libprojectM](https://github.com/projectM-visualizer/projectm). It requires an OpenGL/EGL backend — which is the default under KDE Plasma on Wayland.
+
+**Install presets (Debian/Ubuntu):**
+```bash
+sudo apt install projectm-data libprojectm-dev
+```
+
+Default preset path: `/usr/share/projectM/presets`. Additional preset packs (4 000+) can be placed in any directory and selected in the config dialog. The config dialog lets you pick a preset, enable shuffle, and set the display duration.
+
+On rare Vulkan-only setups, set `QSG_RHI_BACKEND=opengl` before starting plasmashell. Under standard KDE Plasma + Wayland (EGL) no extra configuration is needed.
 
 ## Dependencies
 
@@ -50,6 +64,8 @@ sudo apt install cmake qt6-base-dev qt6-declarative-dev \
                  libkf6package-dev plasma-workspace-dev \
                  libpulse-dev libfftw3-dev \
                  pipewire-pulse pulseaudio-utils
+# Optional: ProjectM visualization (type 19)
+sudo apt install libprojectm-dev projectm-data
 ```
 
 ### Fedora
@@ -58,6 +74,8 @@ sudo dnf install cmake qt6-qtbase-devel qt6-qtdeclarative-devel \
                  kf6-kcoreaddons-devel kf6-ki18n-devel \
                  kf6-kpackage-devel plasma-workspace-devel \
                  pulseaudio-libs-devel fftw-devel pipewire-pulseaudio
+# Optional: ProjectM visualization (type 19)
+sudo dnf install projectM-devel
 ```
 
 ### Arch Linux
@@ -99,7 +117,7 @@ sudo dpkg -i ../kde-desktop-background-libvisual_*.deb
 The configuration panel appears below the selector. From there you can:
 - **Input Device** — choose from detected microphone/capture sources (output monitors are excluded)
 - **Sensitivity / Smoothing** — tune the audio reactivity
-- **Visualization Type** — pick from 19 types; the preview updates live
+- **Visualization Type** — pick from 20 types; the preview updates live
 - **Color Scheme** — global color palette used by most visualizations
 - **Show Status Indicator** — small overlay showing dB level and backend state
 
@@ -234,7 +252,7 @@ plasma-wallpapers/org.kde.libvisual/
 └── contents/
     ├── config/main.xml     # KConfig schema (all settings with defaults)
     └── ui/
-        ├── main.qml        # Wallpaper rendering – all 19 visualization types
+        ├── main.qml        # Wallpaper rendering – all 20 visualization types
         └── config.qml      # Configuration dialog – device picker, level meter, preview
 ```
 

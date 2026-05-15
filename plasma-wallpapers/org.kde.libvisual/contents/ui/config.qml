@@ -16,6 +16,10 @@ KCM.SimpleKCM {
     property alias cfg_visualizationType: visualizationCombo.currentIndex
     property alias cfg_showStatusIndicator: statusIndicatorCheck.checked
     property alias cfg_smoothing: smoothingSlider.value
+    property string cfg_projectMPresetPath: "/usr/share/projectM/presets"
+    property bool   cfg_projectMShuffle: true
+    property int    cfg_projectMDuration: 30
+    property int    cfg_projectMPreset: -1
 
     // Parallel list of raw PA source names (indices match audioDeviceCombo model)
     property var paSourceNames: ["default"]
@@ -196,7 +200,8 @@ ComboBox {
                 i18n("Mandelbrot Zoom"),
                 i18n("Geometric Dance"),
                 i18n("Audio Bars 3D"),
-                i18n("Kaleidoscope")
+                i18n("Kaleidoscope"),
+                i18n("ProjectM Visualizer")
             ]
             currentIndex: 0
         }
@@ -435,6 +440,24 @@ ComboBox {
                                 }
                                 ctx.restore()
                             }
+                        } else if (type === 19) {
+                            // ProjectM — animated psychedelic blob preview
+                            ctx.fillStyle = "#050010"; ctx.fillRect(0, 0, W, H)
+                            for (var i = 0; i < 6; i++) {
+                                var ang = (i / 6) * Math.PI * 2 + t * 0.5
+                                var r2 = Math.min(cx, cy) * (0.3 + 0.5 * Math.abs(Math.sin(t * 0.7 + i)))
+                                var gr = ctx.createRadialGradient(
+                                    cx + Math.cos(ang) * cx * 0.25, cy + Math.sin(ang) * cy * 0.25, 0,
+                                    cx + Math.cos(ang) * cx * 0.25, cy + Math.sin(ang) * cy * 0.25, r2)
+                                gr.addColorStop(0, Qt.hsva((i / 6 + t * 0.04) % 1, 0.95, 1.0, 0.55))
+                                gr.addColorStop(1, Qt.hsva((i / 6 + t * 0.04) % 1, 0.95, 1.0, 0.0))
+                                ctx.fillStyle = gr
+                                ctx.beginPath()
+                                ctx.arc(cx + Math.cos(ang) * cx * 0.25,
+                                        cy + Math.sin(ang) * cy * 0.25,
+                                        r2 * 0.7, 0, Math.PI * 2)
+                                ctx.fill()
+                            }
                         }
                     }
 
@@ -455,6 +478,50 @@ ComboBox {
             Item { Layout.fillWidth: true }
         }
         
+        Kirigami.Separator {
+            Kirigami.FormData.label: i18n("ProjectM Settings")
+            Kirigami.FormData.isSection: true
+            visible: visualizationCombo.currentIndex === 19
+        }
+
+        ComboBox {
+            id: presetCombo
+            Kirigami.FormData.label: i18n("Preset:")
+            visible: visualizationCombo.currentIndex === 19
+            model: {
+                var names = configAudio.scanProjectMPresets(configRoot.cfg_projectMPresetPath)
+                var result = [i18n("Shuffle (auto)")]
+                for (var i = 0; i < names.length; i++) result.push(names[i])
+                return result
+            }
+            currentIndex: Math.max(0, configRoot.cfg_projectMPreset + 1)
+            onActivated: configRoot.cfg_projectMPreset = currentIndex - 1
+        }
+
+        CheckBox {
+            id: projectMShuffleCheck
+            Kirigami.FormData.label: i18n("Auto-shuffle:")
+            visible: visualizationCombo.currentIndex === 19
+            checked: configRoot.cfg_projectMShuffle
+            onToggled: configRoot.cfg_projectMShuffle = checked
+        }
+
+        SpinBox {
+            id: projectMDurationSpin
+            Kirigami.FormData.label: i18n("Duration per preset (s):")
+            visible: visualizationCombo.currentIndex === 19
+            from: 5; to: 300; value: configRoot.cfg_projectMDuration
+            onValueModified: configRoot.cfg_projectMDuration = value
+        }
+
+        Label {
+            visible: visualizationCombo.currentIndex === 19
+            text: i18n("Works on Wayland (EGL/OpenGL) and X11.\nOn Vulkan backends set QSG_RHI_BACKEND=opengl.")
+            wrapMode: Text.WordWrap
+            color: Kirigami.Theme.disabledTextColor
+            Kirigami.FormData.label: i18n("Backend note:")
+        }
+
         ComboBox {
             id: colorSchemeCombo
             Kirigami.FormData.label: i18n("Color Scheme:")
@@ -528,7 +595,7 @@ ComboBox {
         }
         
         Label {
-            text: i18n("Version 1.1.5 - VitexSoftware")
+            text: i18n("Version 1.2.0 - VitexSoftware")
             color: Kirigami.Theme.disabledTextColor
             Kirigami.FormData.label: i18n("Version:")
         }

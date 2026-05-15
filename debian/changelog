@@ -1,3 +1,17 @@
+kde-desktop-background-libvisual (1.2.0-1) unstable; urgency=medium
+
+  * Add projectM visualization (type 19): Milkdrop-compatible GPU presets
+    rendered via libprojectM using QQuickFramebufferObject
+  * Works on Wayland via OpenGL/EGL (KDE Plasma default); shows informative
+    fallback on Vulkan backends with a QSG_RHI_BACKEND=opengl note
+  * New config keys: projectMPresetPath, projectMShuffle, projectMDuration,
+    projectMPreset; preset selector and shuffle controls in config dialog
+  * Add scanProjectMPresets() Q_INVOKABLE on AudioVisualizer for QML preset
+    listing without instantiating a renderer
+  * Bump minor version to 1.2.0
+
+ -- Vítězslav Dvořák <info@vitexsoftware.cz>  Fri, 16 May 2026 02:00:00 +0200
+
 kde-desktop-background-libvisual (1.1.6-1) unstable; urgency=medium
 
   * Replace blocking pa_simple + QTimer with async pa_threaded_mainloop /

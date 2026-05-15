@@ -32,13 +32,13 @@ grep -q "paSourceNames"                         "$CONFIG_QML" && ok "paSourceNam
 grep -q "sources\[i\].description"             "$CONFIG_QML" && ok "shows source descriptions"            || fail "does not display source descriptions"
 grep -q "sources\[i\].name"                    "$CONFIG_QML" && ok "stores source names"                  || fail "does not store source names"
 
-section "config.qml – 19 visualization types"
+section "config.qml – 20 visualization types"
 VIZ_TYPES=(
     "Spectrum Analyzer" "Waveform" "Lissajous" "Circular Burst"
     "Circular Spectrum" "Plasma" "Starfield" "Fireworks"
     "Matrix Rain" "DNA Helix" "Particle Storm" "Ripple Effect"
     "Tunnel Vision" "Spiral Galaxy" "Lightning" "Mandelbrot Zoom"
-    "Geometric Dance" "Audio Bars 3D" "Kaleidoscope"
+    "Geometric Dance" "Audio Bars 3D" "Kaleidoscope" "ProjectM Visualizer"
 )
 for vt in "${VIZ_TYPES[@]}"; do
     grep -q "$vt" "$CONFIG_QML" && ok "viz type present: $vt" || fail "viz type missing: $vt"
@@ -48,12 +48,13 @@ section "config.qml – per-type preview"
 grep -q "type === 0"  "$CONFIG_QML" && ok "preview case: Spectrum (0)"          || fail "preview missing case 0"
 grep -q "type === 15" "$CONFIG_QML" && ok "preview case: Mandelbrot (15)"        || fail "preview missing case 15"
 grep -q "type === 18" "$CONFIG_QML" && ok "preview case: Kaleidoscope (18)"      || fail "preview missing case 18"
+grep -q "type === 19" "$CONFIG_QML" && ok "preview case: ProjectM (19)"          || fail "preview missing case 19"
 grep -q "previewCanvas"             "$CONFIG_QML" && ok "single previewCanvas present" || fail "previewCanvas not found"
 ! grep -q "children\[0\].children\[" "$CONFIG_QML" \
                                     && ok "no fragile children[] indexing"            || fail "fragile children[] indexing still present"
 
-section "main.qml – all 19 viz types implemented"
-for type_id in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18; do
+section "main.qml – all 20 viz types implemented"
+for type_id in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19; do
     grep -q "visualizationType === ${type_id}" "$MAIN_QML" \
         && ok "type ${type_id} handled in main.qml" \
         || fail "type ${type_id} NOT handled in main.qml"

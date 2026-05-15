@@ -1027,6 +1027,30 @@ WallpaperItem {
         Timer { interval: 16; running: parent.visible; repeat: true; onTriggered: parent.requestPaint() }
     }
 
+    // Type 19: ProjectM — Milkdrop-compatible GPU presets via libprojectM
+    // Works on Wayland (OpenGL/EGL) and X11.  Shows a text notice on Vulkan.
+    ProjectMItem {
+        anchors.fill: parent
+        visible: visualizationType === 19 && GraphicsInfo.api === GraphicsInfo.OpenGL
+        waveform: audioBackend.waveform
+        presetPath:     root.configuration.projectMPresetPath || "/usr/share/projectM/presets"
+        shuffleEnabled: root.configuration.projectMShuffle !== false
+        presetDuration: root.configuration.projectMDuration > 0 ? root.configuration.projectMDuration : 30
+        presetIndex:    root.configuration.projectMPreset !== undefined ? root.configuration.projectMPreset : -1
+    }
+    Rectangle {
+        anchors.fill: parent
+        visible: visualizationType === 19 && GraphicsInfo.api !== GraphicsInfo.OpenGL
+        color: "#050010"
+        Text {
+            anchors.centerIn: parent
+            text: "ProjectM requires an OpenGL backend.\nSet QSG_RHI_BACKEND=opengl\n(Wayland + EGL works automatically in KDE Plasma)."
+            color: "#888"
+            horizontalAlignment: Text.AlignHCenter
+            font.pointSize: 11
+        }
+    }
+
     // Information overlay
     Rectangle {
         id: info
@@ -1075,7 +1099,8 @@ WallpaperItem {
                                    "Circular Spectrum","Plasma","Starfield","Fireworks",
                                    "Matrix Rain","DNA Helix","Particle Storm","Ripple Effect",
                                    "Tunnel Vision","Spiral Galaxy","Lightning","Mandelbrot (GPU)",
-                                   "Geometric Dance","Audio Bars 3D","Kaleidoscope"][root.visualizationType] || "?")
+                                   "Geometric Dance","Audio Bars 3D","Kaleidoscope",
+                                   "ProjectM"][root.visualizationType] || "?")
                 color: root.visualizationType === 15 ? "#00ccff" : "white"
                 font.pointSize: 9
                 wrapMode: Text.Wrap

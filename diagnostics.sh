@@ -179,7 +179,7 @@ if [[ -f "$CONFIG_QML" ]]; then
   VIZ_COUNT=$(grep -c 'i18n("' "$CONFIG_QML" | head -1 || true)
   TYPE_COUNT=$(grep -o 'type === [0-9]*' "$CONFIG_QML" 2>/dev/null | sort -u | wc -l)
   ok "Preview canvas handles $TYPE_COUNT distinct visualization type(s)"
-  [[ "$TYPE_COUNT" -ge 19 ]] || warn "Expected 19 viz types in preview, found $TYPE_COUNT"
+  [[ "$TYPE_COUNT" -ge 20 ]] || warn "Expected 20 viz types in preview, found $TYPE_COUNT"
 else
   err "config.qml not found at $CONFIG_QML"; ((ISSUES++))
 fi
@@ -189,7 +189,7 @@ MAIN_QML="$PKG_DIR/contents/ui/main.qml"
 if [[ -f "$MAIN_QML" ]]; then
   IMPL_COUNT=$(grep -o 'visualizationType === [0-9]*' "$MAIN_QML" 2>/dev/null | sort -u | wc -l)
   ok "main.qml handles $IMPL_COUNT visualization type(s)"
-  [[ "$IMPL_COUNT" -ge 19 ]] || warn "Expected ≥19 handled types, found $IMPL_COUNT"
+  [[ "$IMPL_COUNT" -ge 20 ]] || warn "Expected ≥20 handled types, found $IMPL_COUNT"
   ! grep -q 'Visualization Not Yet Implemented' "$MAIN_QML" \
     && ok "No 'Not Yet Implemented' placeholder" \
     || { err "'Not Yet Implemented' placeholder still present"; ((ISSUES++)); }
