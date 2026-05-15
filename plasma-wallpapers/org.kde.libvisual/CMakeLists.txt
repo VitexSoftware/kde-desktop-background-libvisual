@@ -131,6 +131,13 @@ install(DIRECTORY contents/ DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers
 # Install metadata.json at package root
 install(FILES metadata.json DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers/org.kde.libvisual/)
 
+# AppStream metainfo + hicolor stock icon
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../debian/io.github.vitexsoftware.kde_desktop_background_libvisual.metainfo.xml
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo)
+install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/../../kde-desktop-background-libvisual.svg
+    DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+    RENAME io.github.vitexsoftware.kde_desktop_background_libvisual.svg)
+
 feature_summary(WHAT ALL FATAL_ON_MISSING_REQUIRED_PACKAGES)
 
 # --- Mandelbrot GPU shader ---------------------------------------------------

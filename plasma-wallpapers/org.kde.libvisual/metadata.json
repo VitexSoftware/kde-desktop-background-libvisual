@@ -12,7 +12,7 @@
             { "Name": "VitexSoftware" }
         ],
         "License": "GPL-3.0-or-later",
-        "Icon": "preferences-desktop-wallpaper",
+        "Icon": "io.github.vitexsoftware.kde_desktop_background_libvisual",
         "ServiceTypes": [ "Plasma/Wallpaper" ]
     },
     "X-Plasma-MainScript": "ui/main.qml"
