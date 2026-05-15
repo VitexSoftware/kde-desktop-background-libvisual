@@ -128,15 +128,30 @@ bash test_qml_module.sh
 ## Troubleshooting
 
 ### No audio detected / meter stays at −60 dB
-1. Check available input sources:
-   ```bash
-   pactl list short sources | grep -v monitor
-   ```
-2. Select the correct device in the wallpaper configuration dialog.
-3. If the list is empty, ensure a capture device is connected and PipeWire/PulseAudio is running:
+
+1. Verify the audio services are running:
    ```bash
    systemctl --user status pipewire pipewire-pulse
    ```
+   If `pipewire-pulse` is inactive, start it:
+   ```bash
+   systemctl --user start pipewire-pulse
+   ```
+
+2. Check available capture sources (monitors are expected to be absent from this list):
+   ```bash
+   pactl list short sources | grep -v monitor
+   ```
+
+3. If the list is empty, no capture device is connected or the driver is not loaded:
+   ```bash
+   # PipeWire view — look for nodes with media.class = Audio/Source
+   pw-cli list-objects Node | grep -A5 'Audio/Source'
+   # ALSA view
+   arecord -l
+   ```
+
+4. Select the correct device in the wallpaper configuration dialog and check the level meter.
 
 ### Wallpaper shows a black or blank screen
 1. Verify the plugin was installed correctly:
@@ -159,12 +174,61 @@ ls ~/.local/share/plasma/wallpapers/org.kde.libvisual/contents/shaders/
 ```
 If `mandelbrot.frag.qsb` is missing, install `qt6-shader-baker` and rebuild.
 
+## Audio Backend
+
+The plugin uses the native `libpulse` async API and works transparently with both PulseAudio and PipeWire. No detection or switching logic is needed: when PipeWire is running, its `pipewire-pulse` service implements the full PulseAudio protocol and exposes PipeWire nodes as PA sources.
+
+### How capture works
+
+```
+PipeWire / PulseAudio
+        │
+   pa_threaded_mainloop  ←── owns its own OS thread
+        │
+   pa_context → pa_stream (PA_STREAM_START_CORKED)
+        │
+   streamReadCb() callback — PA thread
+        ├─ normalize int16 → float
+        ├─ compute RMS → dB level
+        ├─ run FFTW r2c FFT → 256-bin spectrum
+        └─ QMetaObject::invokeMethod(Qt::QueuedConnection)
+                │
+        onAudioProcessed() — Qt main thread
+                └─ emit spectrumChanged / levelChanged / …
+                        │
+                    QML binding updates
+```
+
+All shared data (`spectrum`, `waveform`, `decibels`, `level`) is protected by a `QMutex`. Property getters lock the mutex before reading; the PA callback locks it only for the final move-assignment.
+
+### Device enumeration
+
+`getInputSources()` opens a separate non-threaded `pa_mainloop`, connects a `pa_context`, and calls `pa_context_get_source_info_list()`. Sources with `monitor_of_sink != PA_INVALID_INDEX` are filtered out so only real capture devices appear in the device selector. This replaces the former `pactl` subprocess.
+
+### PipeWire requirements
+
+```bash
+# Verify PipeWire services are running
+systemctl --user status pipewire pipewire-pulse
+
+# List nodes as seen by PipeWire (all audio objects)
+pw-cli list-objects Node | grep -A3 'media.class.*Source'
+
+# Same view via PulseAudio compat layer
+pactl list sources short | grep -v monitor
+```
+
+If `pipewire-pulse` is not active, `libpulse` connections fail and the meter stays at −60 dB. Start it with:
+```bash
+systemctl --user start pipewire-pulse
+```
+
 ## Project Structure
 
 ```
 plasma-wallpapers/org.kde.libvisual/
-├── audiovisualizer.cpp/h   # PulseAudio capture + FFTW spectrum backend (QML element)
-├── plugin.cpp/h            # Plasma wallpaper plugin entry point
+├── audiovisualizer.cpp/h   # Async libpulse capture + FFTW backend (QML element)
+├── plugin.cpp/h            # Plasma wallpaper plugin entry point (KPluginFactory)
 ├── CMakeLists.txt          # Build system
 ├── metadata.json           # KPackage metadata
 └── contents/
