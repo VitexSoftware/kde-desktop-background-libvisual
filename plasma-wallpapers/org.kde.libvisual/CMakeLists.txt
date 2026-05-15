@@ -39,7 +39,9 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick)
 find_package(Qt6 OPTIONAL_COMPONENTS ShaderTools)
 find_package(PkgConfig QUIET)
 if(PkgConfig_FOUND)
-    pkg_check_modules(PULSEAUDIO libpulse-simple libpulse)
+    # libpulse (async API): pa_context, pa_stream, pa_threaded_mainloop
+    # libpulse-simple is no longer used (replaced by pa_stream callbacks)
+    pkg_check_modules(PULSEAUDIO REQUIRED libpulse)
     pkg_check_modules(FFTW3 REQUIRED fftw3)
 endif()
 

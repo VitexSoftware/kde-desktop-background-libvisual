@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-PROJECT_ROOT="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_ID="org.kde.libvisual"
 PKG_DIR="$HOME/.local/share/plasma/wallpapers/${PLUGIN_ID}"
 PLUGIN_SO_GLOB=(
