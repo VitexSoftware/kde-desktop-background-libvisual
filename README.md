@@ -2,6 +2,9 @@
 
 Audio-reactive wallpaper plugin for KDE Plasma 6. Renders real-time visualizations on the desktop background, driven by live microphone or audio input via PulseAudio/PipeWire.
 
+<iframe title="LibVisual Desktop Background" width="560" height="315" src="https://vhsky.cz/videos/embed/vnuNcJBrdng6z1J6Em1NED" style="border: 0px;" allow="fullscreen" sandbox="allow-same-origin allow-scripts allow-popups allow-forms"></iframe>
+
+
 ![waveform screenshot](waveform.png?raw=true)
 
 **Version 1.1.5**
