@@ -88,16 +88,22 @@ set_target_properties(audiovisualizer_probe PROPERTIES
 )
 
 # Install unified QML module and backing library
+# Qt's resolvePlugin() on Linux prepends "lib" when searching for QML plugins,
+# so the installed file must be named libaudiovisualizer_probeplugin.so.
 install(TARGETS audiovisualizer_probe DESTINATION ${KDE_INSTALL_LIBDIR})
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/qmldir DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so
+        DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer
+        RENAME libaudiovisualizer_probeplugin.so)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probe.qmltypes DESTINATION ${KDE_INSTALL_QMLDIR}/AudioVisualizer)
 
 # Duplicate QML module into multi-arch qml dir if that exists
 if(MULTIARCH_QMLDIR AND NOT MULTIARCH_QMLDIR STREQUAL KDE_INSTALL_QMLDIR)
     install(TARGETS audiovisualizer_probe DESTINATION ${KDE_INSTALL_LIBDIR})
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/qmldir DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
-    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probeplugin.so
+            DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer
+            RENAME libaudiovisualizer_probeplugin.so)
     install(FILES ${CMAKE_CURRENT_BINARY_DIR}/AudioVisualizer/audiovisualizer_probe.qmltypes DESTINATION ${MULTIARCH_QMLDIR}/AudioVisualizer)
 endif()
 
